@@ -1,0 +1,5507 @@
+
+;LAST UPDATE: 19.04.2021 savelij
+
+;автоопределение кодировки не работает
+
+;2000 0000
+;2020 0020
+;2040 0040
+;2060 0060
+;2080 0080
+;20A0 00A0
+;20C0 00C0
+;20E0 00E0
+
+;2800 0800
+;2820 0820
+;2840 0840
+;2860 0860
+;2880 0880
+;28A0 08A0
+;28C0 08C0
+;28E0 08E0
+
+;3000 1000
+;3020 1020
+;3040 1040
+;3060 1060
+;3080 1080
+;30A0 10A0
+;30C0 10C0
+;30E0 10E0
+
+;3800 1800
+;3820 1820
+;3840 1840
+;3860 1860
+;3880 1880
+;38A0 18A0
+;38C0 18C0 X
+;38E0 18E0 X
+
+;38C0 18C0 X
+;39C0 19C0 X
+;3AC0 1AC0 X
+;3BC0 1BC0 X
+;3CC0 1CC0 X
+;3DC0 1DC0 X
+;3EC0 1EC0 X
+;3FC0 1FC0 X
+
+		include ../../../../svn/pentevo/rom/macros.a80
+		include macros.a80
+
+ROM_VERS	EQU "2.3"
+
+OFF_AUTOSTART	EQU 0		; 0-автостарт с дискеты, 1-без автостарта
+
+	IF 0
+; расширенные порты ВГшки по адресации Профика
+VG_1F		EQU 0x83	; регистр команд
+VG_3F		EQU 0xA3	; регистр дорожки
+VG_5F		EQU 0xC3	; регистр сектора
+VG_7F		EQU 0xE3	; регистр данных
+VG_FF		EQU 0x3F	; регистр ВГ
+	ELSE
+; стандартные порты ВГшки
+VG_1F		EQU 0x1F	; регистр команд
+VG_3F		EQU 0x3F	; регистр дорожки
+VG_5F		EQU 0x5F	; регистр сектора
+VG_7F		EQU 0x7F	; регистр данных
+VG_FF		EQU 0xFF	; регистр ВГ
+	ENDIF
+
+COL_CURS_DRAW	EQU 0XF9	; цвет курсора для рисования
+COL_CURS_DEL	EQU 0XF8	; цвет курсора для стирания
+COL_DEV_MENU	EQU 0XCF	; цвет окна выбора девайса
+COL_DEVMEN_DRAW	EQU 0XC7	; цвет курсора выбора девайса для рисования
+COL_DEVMEN_DEL	EQU 0XCF	; цвет курсора выбора девайса для стирания
+
+COL_SCR		EQU 0X4000
+TRDOS_ADR_READ	EQU 0X5D25
+TRDOS_AUTORUN	EQU 0X5E27
+byte_7FFC	EQU 0X7FFC
+byte_7FFD	EQU 0X7FFD
+byte_7FFE	EQU 0X7FFE
+ADR_SCR_L	EQU 0X8000
+PIX_SCR		EQU 0X8000
+byte_902B	EQU 0x902B
+byte_902D	EQU 0x902D
+byte_983D	EQU 0x983D
+WORK_STACK	EQU 0X98FE
+
+Y_COORD		EQU 0X99C0
+X_COORD		EQU 0X99C1
+ADR_SCR_PIX	EQU 0X99C2
+ADR_SCR_COL	EQU 0X99C4
+Y_COORD_COL	EQU 0X99C6
+X_COORD_COL	EQU 0X99C7
+BUF_SYM		EQU 0X99C8
+word_99D0	EQU 0X99D0
+byte_99D2	EQU 0X99D2
+FLAG_PRESS_KEY	EQU 0X99D4
+PRESS_KEY	EQU 0X99D5
+byte_99D7	EQU 0X99D7
+PRESSED_KEY	EQU 0X99DA
+byte_99DB	EQU 0X99DB
+TRACK		EQU 0X99DC
+byte_99DD	EQU 0X99DD
+SECTOR		EQU 0X99DE
+ADR_READ_DISK	EQU 0X99DF
+SECTOR_SIZE	EQU 0X99E1
+word_99E5	EQU 0X99E5
+byte_99E7	EQU 0X99E7
+word_99E9	EQU 0X99E9
+byte_99EB	EQU 0X99EB
+byte_99EC	EQU 0X99EC
+byte_99ED	EQU 0X99ED
+byte_99EE	EQU 0X99EE
+byte_99F2	EQU 0X99F2
+
+byte_9AC0	EQU 0X9AC0
+byte_9AC6	EQU 0X9AC6
+byte_9AF2	EQU 0X9AF2
+byte_9AFA	EQU 0X9AFA
+
+byte_9BC0	EQU 0X9BC0
+byte_9CC0	EQU 0X9CC0
+byte_9CC1	EQU 0X9CC1
+byte_9CC4	EQU 0X9CC4
+
+byte_9DC0	EQU 0X9DC0
+
+BUF_TEST_PAL	EQU 0X9EC0
+END_BUF_PAL	EQU 0X9ECE
+END_BUF_TESTPAL	EQU 0X9ECF
+ADR_TEK_PAL	EQU 0X9ED0
+byte_9ED2	EQU 0X9ED2
+byte_B82F	EQU 0xB82F
+unk_C00A	EQU 0xC00A
+byte_D000	EQU 0xD000
+byte_FFFE	EQU 0xFFFE
+ADR_SCR_R	EQU 0XA000
+
+CONF_128	EQU 0X7FFD
+PROFI_CONF	EQU 0XDFFD
+
+		ORG 0
+		DI
+;		im	1
+	IFDEF TSTKEYS
+		JP TESTKEYS
+	ELSE
+		jp	START
+	ENDIF
+
+off_8A0:	dw loc_8AC
+off_34D:	dw loc_344
+
+		DUPL 0x8-$,0xFF
+; печать символа из регистра C
+		JP PRINT_C_
+
+off_994:	dw loc_984
+off_996:	dw loc_95D
+
+		DUPL 0x10-$,0xFF
+; печать текста следующего сразу за вызовом
+PRINT_NEXT_TXT	pop	de
+		rst 0x18
+		push	de
+		ret
+
+off_229C:	dw loc_2280
+off_22B6:	dw loc_229E
+
+		DUPL 0x18-$,0xFF
+; печать текста по указанному в de адресу
+		JP PRINT_MSG
+
+loc_E4:		call	CODE_0A				; переход а следующую строку
+		jr	CODE_0D				; установка позиции печати по X на начало строки
+
+		DUPL 0x20-$,0xFF
+; переключение портов конфигурации
+		JP SET_CONF_PORTS
+
+; переход а следующую строку
+CODE_0A:	ld	hl,Y_COORD
+		inc	(hl)
+		ret
+
+		DUPL 0x28-$,0xFF
+		JP COLOR2SCR
+
+; печатать символы '║║'
+CODE_07:	RST10 "║║"
+		ret
+
+		DUPL 0X0030-$,0XFF
+SET_XY_COORD:	ld	(Y_COORD),bc
+		ret
+
+		DUPL 0X0038-$,0XFF
+sub_38:		jp	INT
+
+; установка позиции печати по X на начало строки
+CODE_0D:	ld	hl,X_COORD
+		ld	(hl),0
+		ret
+
+; печать текстовой строки
+PRINT_MSG:	ld	a,(de)
+		inc	de
+		and	a
+		ret	z
+		push	de
+		ld	c,a
+		RST 8
+		pop	de
+		jr	PRINT_MSG
+
+PRINT_C_:	ld	a,c
+		cp	0Dh
+		jp	z,CODE_0D			; установка позиции печати по X на начало строки
+		cp	0Ah
+		jp	z,CODE_0A			; переход а следующую строку
+		cp	0Ch
+		jp	z,CODE_0C			; очистка экрана
+		cp	1
+		jp	z,CODE_01			; печатать 3 пробела
+		cp	2
+		jp	z,CODE_02			; печатать 6 пробелов
+		cp	3
+		jp	z,CODE_03			; печатать 11 пробелов
+		cp	4
+		jp	z,CODE_04			; печатать 24 пробела
+		cp	5
+		jp	z,CODE_05			; печатать 3 символа '─'
+		cp	6
+		jp	z,CODE_06			; печатать 3 символа '═'
+		cp	0Bh
+		jp	z,CODE_0B			; печатать символы '╓─╖'
+		cp	0Eh
+		jp	z,CODE_0E			; печатать символы '╙─╜'
+		cp	0Fh
+		jp	z,CODE_0F			; печатать символы ' ║ ║ '
+		cp	12h
+		jp	z,CODE_12			; печатать символы часть рамки '───╖ ╓───' 9 раз
+		cp	13h
+		jp	z,CODE_13			; печатать символы часть рамки '───╜ ╙───' 9 раз
+		cp	14h
+		jp	z,CODE_14			; печатать 11 кодов CODE_0B
+		cp	15h
+		jp	z,CODE_15			; печатать 11 кодов CODE_0E
+		cp	7
+		jp	z,CODE_07			; печатать символы '║║'
+		cp	17h
+		jp	z,CODE_17			; печатать 3 кода CODE_05
+		cp	18h
+		jp	z,CODE_18			; печатать 3 кода CODE_06
+loc_B2:		LD L,A
+		LD H,0
+		ADD HL,HL
+		ADD HL,HL
+		ADD HL,HL
+;		ld	d,0
+;		sla	a
+;		rl	d
+;		sla	a
+;		rl	d
+;		sla	a
+;		rl	d
+;		ld	e,a
+;		ld	hl,FONT-0X100			; знакогенератор -0x100
+		LD DE,FONT-0x100			; знакогенератор -0x100
+		add	hl,de
+		ld	bc,(Y_COORD)
+		ld	de,(ADR_SCR_PIX)
+		push	bc
+		call	OUT_SYM				; вывод	символа	на экран
+		pop	bc
+		inc	b
+		ld	a,b
+		cp	40h
+		jp	nz,SET_XY_COORD
+		ld	a,c
+		cp	1Dh
+		jp	nz,loc_E4
+		jp	loc_10D
+
+; очистка экрана
+CODE_0C		DI
+		LD DE,0X78C0
+		LD B,0X18C0/32
+		CALL FILL_SCR
+		LD DE,0X58C0
+		LD B,0X18C0/32
+		CALL FILL_SCR
+		LD DE,0X79C0
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD DE,0X59C0
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+
+		LD DE,0X78C0+0X4000
+		LD B,0X18C0/32
+		CALL FILL_SCR
+		LD DE,0X58C0+0X4000
+		LD B,0X18C0/32
+		CALL FILL_SCR
+		LD DE,0X79C0+0X4000
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD DE,0X59C0+0X4000
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+		INC D
+		LD B,0XC0/32
+		CALL FILL_SCR
+loc_10D:	ld	hl,Y_COORD
+		xor	a
+		ld	(hl),a
+		inc	hl
+		ld	(hl),a
+		ret
+
+FILL_SCR	PUSH DE
+		LD HL,0
+		ADD HL,SP
+		EX DE,HL
+		LD SP,HL
+		LD HL,0
+FILLSCR1	REPT 16
+		PUSH HL
+		ENDM
+		DJNZ FILLSCR1
+		EX DE,HL
+		LD SP,HL
+		POP DE
+		RET
+
+; печатать 3 пробела
+CODE_01:	ld	b,3
+		jr	loc_123
+
+; печатать 6 пробелов
+CODE_02:	ld	b,6
+		jr	loc_123
+
+; печатать 11 пробелов
+CODE_03:	ld	b,0Bh
+		jr	loc_123
+
+; печатать 24 пробела
+CODE_04:	ld	b,18h
+loc_123:	ld	c," "
+loc_125:	push	bc
+		RST 8
+		pop	bc
+		djnz	loc_125
+		ret
+
+; печатать 3 символа '─'
+CODE_05:	ld	bc,3<<8+'─'
+		jr	loc_125
+
+; печатать 3 символа '═'
+CODE_06:	ld	bc,3<<8+'═'
+		jr	loc_125
+
+; печатать символы '╓─╖'
+CODE_0B:	ld	c,'╓'
+		RST 8
+		ld	c,'─'
+		RST 8
+		ld	c,'╖'
+loc_143:	RST 8
+		RET
+
+; печатать символы '╙─╜'
+CODE_0E:	ld	c,'╙'
+loc_148:	RST 8
+		ld	c,'─'
+		RST 8
+		ld	c,'╜'
+		RST 8
+		RET
+
+; печатать 11 кодов CODE_0B
+CODE_14:	ld	bc,0B0Bh
+		jr	loc_125
+
+; печатать 11 кодов CODE_0E
+CODE_15:	ld	bc,0B0Eh
+		jr	loc_125
+
+; печатать символы ' ║ ║ '
+CODE_0F:	RST10 " ║ ║ "
+		ret
+
+; печатать символы '╖ ╓'
+sub_169:	RST10 "╖ ╓"
+		ret
+
+; печатать '╜ ╙'
+sub_171:	RST10 "╜ ╙"
+		ret
+
+; печатать символы часть рамки '───╖ ╓───' 9 раз
+CODE_12:	ld	b,9
+loc_17B:	push	bc
+		call	CODE_05				; печатать 3 символа '─'
+		call	sub_169				; печатать символы '╖ ╓'
+		pop	bc
+		djnz	loc_17B
+		JR	CODE_05
+
+; печатать символы часть рамки '───╜ ╙───' 9 раз
+CODE_13:	ld	b,9
+loc_18B:	push	bc
+		call	CODE_05				; печатать 3 символа '─'
+		call	sub_171				; печатать '╜ ╙'
+		pop	bc
+		djnz	loc_18B
+		JR	CODE_05
+
+; печатать 3 кода CODE_05
+CODE_17:	RST10 "\5\5\5"
+		ret
+
+; печатать 3 кода CODE_06
+CODE_18:	RST10 "\6\6\6"
+		ret
+
+FILL_COLOR_WIN:	ld	a,c
+		ld	c,b
+		ld	b,a
+		ld	(Y_COORD_COL),a
+		ld	a,e
+		ld	(X_COORD_COL),a
+loc_1BA:	push	de
+		push	bc
+		push	hl
+		ld	de,(ADR_SCR_COL)
+		call	FILL_SYM
+		pop	hl
+		pop	bc
+		pop	de
+		dec	e
+		jr	z,loc_1CD
+		inc	b
+		jr	loc_1BA
+
+loc_1CD:	dec	d
+		ret	z
+		inc	c
+		ld	a,(Y_COORD_COL)
+		ld	b,a
+		ld	a,(X_COORD_COL)
+		ld	e,a
+		jr	loc_1BA
+
+PRINT_COLOR:	ld	a,c
+		ld	c,b
+		ld	b,a
+		ld	(Y_COORD_COL),a
+		ld	a,e
+		ld	(X_COORD_COL),a
+loc_1E4:	push	de
+		push	bc
+		push	hl
+		ld	de,(ADR_SCR_COL)
+		call	OUT_SYM				; вывод	символа	на экран
+		pop	hl
+		pop	bc
+		pop	de
+		dec	e
+		jr	z,loc_1F7
+		inc	b
+		jr	loc_1E4
+
+loc_1F7:	dec	d
+		ret	z
+		inc	c
+		ld	a,(Y_COORD_COL)
+		ld	b,a
+		ld	a,(X_COORD_COL)
+		ld	e,a
+		jr	loc_1E4
+
+INVERS_WINDOW:	ld	a,c
+		ld	c,b
+		ld	b,a
+		ld	(Y_COORD_COL),a
+		ld	a,e
+		ld	(X_COORD_COL),a
+loc_20E:	push	de
+		push	bc
+		call	INVERS_SYMSCR
+		pop	bc
+		pop	de
+		dec	e
+		jr	z,loc_21B
+		inc	b
+		jr	loc_20E
+
+loc_21B:	dec	d
+		ret	z
+		inc	c
+		ld	a,(Y_COORD_COL)
+		ld	b,a
+		ld	a,(X_COORD_COL)
+		ld	e,a
+		jr	loc_20E
+
+OUT_LOGO:	ld	a,c
+		ld	c,b
+		ld	b,a
+		ld	(Y_COORD_COL),a
+		ld	a,e
+		ld	(X_COORD_COL),a
+		jr	loc_23A
+
+loc_234:	push	bc
+		ld	bc,8
+		add	hl,bc
+		pop	bc
+loc_23A:	push	de
+		push	bc
+		push	hl
+		ld	de,(ADR_SCR_COL)
+		call	OUT_SYM				; вывод	символа	на экран
+		pop	hl
+		pop	bc
+		pop	de
+		dec	e
+		jr	z,loc_24D
+		inc	b
+		jr	loc_234
+
+loc_24D:	dec	d
+		ret	z
+		inc	c
+		ld	a,(Y_COORD_COL)
+		ld	b,a
+		ld	a,(X_COORD_COL)
+		ld	e,a
+		jr	loc_234
+
+VERTIC_LINE:	ld	hl,BUF_SYM
+loc_25D:	push	hl
+		push	bc
+		push	hl
+		push	de
+		ld	de,PIX_SCR
+		call	SAVE_SYM
+		pop	de
+		pop	hl
+		push	hl
+		push	de
+		ld	a,e
+		and	a
+		ld	a,1
+		JR	Z,loc_27A
+		ld	b,e
+		ld	hl,BUF_SYM
+loc_276:	rlca
+		djnz	loc_276
+loc_27A:	ld	d,a
+		ld	b,8
+loc_27D:	ld	a,(hl)
+		or	d
+		ld	(hl),a
+		inc	hl
+		djnz	loc_27D
+		pop	de
+		pop	hl
+		pop	bc
+		push	bc
+		push	de
+		ld	de,PIX_SCR
+		call	OUT_SYM				; вывод	символа	на экран
+		pop	de
+		pop	bc
+		pop	hl
+		inc	c
+		dec	d
+		jr	nz,loc_25D
+		ret
+
+HORIZ_LINE:	ld	hl,BUF_SYM
+loc_299:	push	hl
+		push	bc
+		push	hl
+		push	de
+		ld	de,ADR_SCR_L
+		call	SAVE_SYM
+		pop	de
+		pop	hl
+		push	hl
+		push	de
+		ld	d,0
+		add	hl,de
+		ld	(hl),0FFh
+		pop	de
+		pop	hl
+		pop	bc
+		push	bc
+		push	de
+		ld	de,ADR_SCR_L
+		call	OUT_SYM				; вывод	символа	на экран
+		pop	de
+		pop	bc
+		pop	hl
+		inc	b
+		dec	d
+		jr	nz,loc_299
+		ret
+
+INVERS_SYMSCR:	ld	de,PIX_SCR
+		srl	b
+		jr	c,loc_2C9
+		ld	de,ADR_SCR_R
+loc_2C9:	call	DE_ADR_SCR			; вычисление адреса в экране
+		ld	b,8
+loc_2CE:	ld	a,(de)
+		cpl
+		ld	(de),a
+		inc	d
+		djnz	loc_2CE
+		ret
+
+FILL_SYM:	srl	b
+		jr	nc,loc_2DF
+		call	DE_ADR_SCR			; вычисление адреса в экране
+		jp	loc_2E8
+
+loc_2DF:	call	DE_ADR_SCR			; вычисление адреса в экране
+		ld	bc,2000h
+		ex	de,hl
+		add	hl,bc
+		ex	de,hl
+loc_2E8:	ld	b,8
+loc_2EA:	ld	a,l
+		ld	(de),a
+		inc	d
+		djnz	loc_2EA
+		ret
+
+; вывод	символа	на экран
+OUT_SYM:	srl	b
+		jr	nc,loc_2F9
+		call	DE_ADR_SCR			; вычисление адреса в экране
+		jr	loc_302
+
+loc_2F9:	call	DE_ADR_SCR			; вычисление адреса в экране
+		ld	bc,2000h
+		ex	de,hl
+		add	hl,bc
+		ex	de,hl
+loc_302:	ld	b,8
+loc_304:	ld	a,(hl)
+		ld	(de),a
+		inc	hl
+		inc	d
+		djnz	loc_304
+		ret
+
+SAVE_SYM:	srl	b
+		jr	nc,loc_314
+		call	DE_ADR_SCR			; вычисление адреса в экране
+		jr	loc_31D
+
+loc_314:	call	DE_ADR_SCR			; вычисление адреса в экране
+		ld	bc,2000h
+		ex	de,hl
+		add	hl,bc
+		ex	de,hl
+loc_31D:	ld	b,8
+loc_31F:	ld	a,(de)
+		ld	(hl),a
+		inc	hl
+		inc	d
+		djnz	loc_31F
+		ret
+
+; вычисление адреса в экране
+DE_ADR_SCR:	ld	a,c
+		and	7
+		rrca
+		rrca
+		rrca
+		add	a,b
+		ld	e,a
+		ld	a,c
+		or	d
+		and	0F8h
+		ld	d,a
+		ret
+
+TESTER_PAL:	RST30 1603h
+		RST18 asc_34F5				; "Тест  полной палитры"
+		ld	hl,byte_3990
+		ld	bc,316h
+		ld	de,114h
+		call	PRINT_COLOR
+		ld	b,7
+		ld	hl,byte_576
+loc_36C:	push	bc
+		ld	b,(hl)
+		inc	hl
+		ld	c,(hl)
+		inc	hl
+		ld	d,(hl)
+		inc	hl
+		push	hl
+		RST 0x30
+		push	de
+		push	bc
+		ld	b,d
+		ld	c,0F5h;'ї'
+loc_37C:	push	bc
+		RST 8
+		pop	bc
+		djnz	loc_37C
+		pop	bc
+		pop	de
+		ld	a,0Eh
+		sub	c
+		add	a,0Eh
+		ld	c,a
+		RST 0x30
+		ld	b,d
+		ld	c,0F6h;'Ў'
+loc_391:	push	bc
+		RST 8
+		pop	bc
+		djnz	loc_391
+		pop	hl
+		pop	bc
+		djnz	loc_36C
+		ld	hl,TEST_PAL
+		ld	(ADR_TEK_PAL),hl
+		ld	b,0Fh
+		ld	hl,byte_9ED2
+loc_3A7:	ld	(hl),b
+		inc	hl
+		djnz	loc_3A7
+		ld	b,10h
+		ld	hl,BUF_TEST_PAL
+		push	hl
+loc_3B1:	ld	(hl),0
+		inc	hl
+		djnz	loc_3B1
+		pop	hl
+		call	SET_PALITRA
+		xor	a
+loc_3BB:	push	af
+		push	af
+		call	sub_47D
+		pop	af
+		call	sub_4B6
+		pop	af
+		inc	a
+		cp	0Fh
+		jr	nz,loc_3BB
+		ld	b,2
+		push	bc
+loc_3CD:	ld	de,END_BUF_TESTPAL
+		ld	hl,END_BUF_PAL
+		ld	bc,0Eh
+		lddr
+		ld	hl,(ADR_TEK_PAL)
+		ldi
+		ld	a,0FFh
+		cp	(hl)
+		jr	nz,loc_3E5
+		ld	hl,TEST_PAL
+loc_3E5:	ld	(ADR_TEK_PAL),hl
+		ld	hl,BUF_TEST_PAL
+		call	SET_PALITRA
+loc_3EE:	ld	bc,7FFEh
+		call	sub_449
+		jr	z,loc_3EE
+		ld	b,0FEh
+		call	sub_449
+		jr	z,loc_428
+		ld	b,0F7h
+		in	a,(c)
+		ld	b,0
+loc_403:	rrca
+		jr	nc,loc_424
+		inc	b
+		ld	l,a
+		ld	a,5
+		cp	b
+		ld	a,l
+		jr	z,loc_403
+		push	bc
+		ld	b,0EFh
+		in	a,(c)
+		pop	bc
+		rlca
+		rlca
+		rlca
+loc_417:	rlca
+		jr	nc,loc_424
+		inc	b
+		ld	l,a
+		ld	a,0Ah
+		cp	b
+		ld	a,l
+		jr	z,loc_417
+		jr	loc_42F
+
+loc_424:	pop	de
+		push	bc
+		jr	loc_42F
+
+loc_428:	ld	b,0F7h
+		call	sub_449
+		jr	z,loc_450
+loc_42F:	pop	bc
+		push	bc
+		xor	a
+		cp	b
+		jr	z,loc_3CD
+		di
+;		ld	a,1
+		INC A
+		ld	(byte_99ED),a
+		ld	c,a
+		ld	ix,loc_442
+loc_440:	ei
+		halt
+loc_442:	djnz	loc_440
+		ld	(byte_99ED),a
+		jr	loc_3CD
+
+sub_449:	in	a,(c)
+		and	1Fh
+		cp	1Eh
+		ret
+
+loc_450:	pop	bc
+		ld	hl,byte_566
+SET_PALITRA:	di
+		ld	a,1
+		ld	(byte_99ED),a
+		ld	c,a
+		ld	ix,loc_461
+		ei
+		halt
+loc_461:	di
+		ld	(byte_99ED),a
+;		ld	d,10h
+;		ld	e,0Eh
+		LD DE,0x100E
+		ld	c,7Eh
+		ld	a,0Fh
+		out	(c),a
+loc_46F:	ld	a,(hl)
+		cpl
+		ld	b,a
+		ld	a,e
+		and	0Fh
+		out	(c),a
+		inc	hl
+		dec	e
+		dec	d
+		jr	nz,loc_46F
+		ret
+
+sub_47D:	srl	a
+		ret	c
+		cp	7
+		ret	z
+		push	af
+		rlca
+		push	af
+		call	sub_505
+		pop	af
+		inc	a
+		ld	c,l
+		call	sub_505
+		ld	a,l
+		rrca
+		rrca
+		rrca
+		bit	4,a
+		jr	z,loc_499
+		xor	50h
+loc_499:	or	c
+		ld	l,a
+		pop	af
+		push	af
+		push	hl
+		call	sub_4F5
+		pop	hl
+		ld	d,1
+		push	bc
+		push	de
+		push	hl
+		call	FILL_COLOR_WIN
+		pop	hl
+		pop	de
+		pop	bc
+		pop	af
+		ld	b,a
+		ld	a,15h
+		sub	b
+		ld	b,a
+		jp	FILL_COLOR_WIN
+
+sub_4B6:	cp	0Eh
+		jr	z,loc_4ED
+		push	af
+		srl	a
+		push	af
+		call	sub_4F5
+		ld	e,1
+		pop	af
+		push	af
+		rlca
+		ld	d,a
+		ld	a,0Fh
+		sub	d
+		ld	d,a
+		pop	af
+		jr	nc,loc_4D3
+		dec	d
+		dec	d
+		inc	b
+		jr	loc_4D4
+
+loc_4D3:	dec	c
+loc_4D4:	pop	af
+loc_4D5:	push	af
+		push	de
+		call	sub_505
+		pop	de
+		push	de
+		push	hl
+		push	bc
+		call	FILL_COLOR_WIN
+		pop	bc
+		pop	hl
+		pop	de
+		pop	af
+		ld	c,a
+		ld	a,2Eh
+		sub	c
+		ld	c,a
+		jp	FILL_COLOR_WIN
+
+loc_4ED:	ld	bc,0E1Fh
+		ld	de,101h
+		jr	loc_4D5
+
+sub_4F5:	ld	e,a
+		rlca
+		add	a,e
+		ld	e,a
+		ld	d,0
+		ld	hl,byte_576
+		add	hl,de
+		ld	c,(hl)
+		inc	hl
+		ld	b,(hl)
+		inc	hl
+		ld	e,(hl)
+		ret
+
+sub_505:	ld	e,a
+		ld	d,0
+		ld	hl,byte_9ED2
+		add	hl,de
+		ld	a,(hl)
+		rlca
+		rlca
+		rlca
+		bit	6,a
+		jr	nz,loc_516
+		ld	l,a
+		ret
+
+loc_516:	xor	0C0h
+		ld	l,a
+		ret
+
+WAIT_KEY:	ei
+		ld	a,(FLAG_PRESS_KEY)
+		or	a
+		jr	z,WAIT_KEY
+		xor	a
+		di
+		ld	(FLAG_PRESS_KEY),a
+		ld	a,(PRESS_KEY)
+		ei
+		ret
+
+sub_59C:	ei
+		ld	a,(FLAG_PRESS_KEY)
+		or	a
+		ld	a,0
+		ret	nz
+;		ld	a,0FFh
+		DEC A
+		ret
+
+loc_5A7:	pop	af
+		pop	af
+		xor	a
+		cp	c
+		jr	z,loc_5AF
+		jp	(ix)
+
+loc_5AF:	jp	(iy)
+
+INT:		push	af
+		ld	a,(byte_99ED)
+		and	a
+		jr	nz,loc_5A7
+		push	de
+		push	bc
+		push	hl
+		call	INKEYS
+		pop	hl
+		pop	bc
+		pop	de
+		pop	af
+		ret
+
+INKEYS:		ld	a,(FLAG_PRESS_KEY)
+		or	a
+		ret	nz
+		call	READ_KEYS
+		ld	hl,(PRESS_KEY)
+		push	af
+		cp	l
+		ld	l,a
+		jr	z,loc_5E3
+		ld	a,1
+		LD H,A
+		ld	(byte_99D7),a
+;		ld	h,1
+loc_5DA:	pop	af
+		xor	a
+loc_5DC:	ld	(FLAG_PRESS_KEY),a
+loc_5DF:	ld	(PRESS_KEY),hl
+		ret
+
+loc_5E3:	dec	h
+		jr	nz,loc_5DA
+		pop	af
+		ld	h,2
+		jr	nc,loc_5ED
+		jr	loc_5DF
+
+loc_5ED:	ld	a,(byte_99D7)
+		inc	a
+		ld	h,18h
+		jr	nz,loc_5F7
+		ld	h,2
+loc_5F7:	ld	a,0FFh
+		ld	(byte_99D7),a
+		ld	a,1
+		jr	loc_5DC
+
+READ_KEYS:	exx
+		push	hl
+		ld	l,0
+		exx
+		push	hl
+		push	de
+		push	bc
+		ld	hl,loc_697
+		push	hl
+		ld	l,2Fh
+		ld	de,0FFFFh
+		ld	bc,0FEFEh
+loc_614:	in	a,(c)
+		cpl
+		and	3Fh
+		add	a,0E0h
+		exx
+		rr	l
+		exx
+		and	1Fh
+		jr	z,loc_631
+		ld	h,a
+		ld	a,l
+loc_625:	inc	d
+		ret	nz
+loc_627:	sub	8
+		srl	h
+		jr	nc,loc_627
+		ld	d,e
+		ld	e,a
+		jr	nz,loc_625
+loc_631:	dec	l
+		rlc	b
+		jr	c,loc_614
+		inc	de
+		ld	a,d
+		or	e
+		dec	de
+		ret	z
+		ld	a,d
+		ld	c,e
+		cp	27h
+		jr	z,loc_662
+		ld	a,e
+		ld	c,d
+		cp	27h
+		jr	z,loc_662
+		cp	18h
+		jr	z,loc_677
+		ld	a,d
+		ld	c,e
+		cp	18h
+		jr	z,loc_677
+		ld	a,d
+		cp	e
+		jr	nc,loc_657
+		ld	d,e
+		ld	e,a
+loc_657:	inc	d
+		ret	nz
+		ld	hl,TABL_KEYS			; "BHY65TGVNJU74RFCMKI83EDXsLO92WSZ "
+loc_65C:	add	hl,de
+		pop	bc
+		ld	a,(hl)
+		or	a
+		jr	loc_69A
+
+loc_662:	ld	a,c
+		cp	18h
+		jr	z,loc_68C
+		inc	a
+		jr	z,loc_672
+		ld	e,c
+		ld	d,0
+		ld	hl,byte_6F7
+		jr	loc_65C
+
+loc_672:	pop	bc
+		ld	a,'t'
+		jr	loc_694
+
+loc_677:	ld	a,c
+		cp	' '
+		jr	z,loc_691
+		inc	a
+		jr	z,loc_687
+		ld	e,c
+		ld	d,0
+		ld	hl,asc_6CF			; "*^[&%>c/,-]'$<a?.+e(#f\\`s=;)@hb:qi\"_!gd"...
+		jr	loc_65C
+
+loc_687:	pop	bc
+		ld	a,'s'
+		jr	loc_694
+
+loc_68C:	pop	bc
+		ld	a,'p'
+		jr	loc_694
+
+loc_691:	pop	bc
+		ld	a,'q'
+loc_694:	scf
+		jr	loc_69A
+
+loc_697:	ld	a,0FFh
+		scf
+loc_69A:	pop	bc
+		pop	de
+		pop	hl
+		exx
+		ld	h,a
+		ld	a,l
+		ld	(PRESSED_KEY),a
+		ld	a,h
+		pop	hl
+		exx
+		ret
+
+sub_71F:	ld	hl,0C000h
+		ld	de,400h
+		ld	b,e
+		ld	c,e
+		call	VERIFY_MEM
+		and	a
+		jr	z,loc_73F
+		ld	bc,400h
+		ld	d,b
+		ld	e,1
+loc_733:	call	VERIFY_MEM
+		push	af
+		RST20 400h				; запись в порты DFFD,7FFD
+		pop	af
+		ret
+
+loc_73F:	ld	bc,400h
+		ld	d,b
+		ld	e,2
+		jr	loc_733
+
+VERIFY_MEM:	push	de
+		push	bc
+		RST 0x20				; запись в порты DFFD,7FFD
+		ld	a,(hl)
+		ld	(hl),0FFh
+		pop	de
+		RST 0x20				; запись в порты DFFD,7FFD
+		ld	(hl),0
+		pop	de
+		RST 0x20				; запись в порты DFFD,7FFD
+		ld	d,a
+		xor	a
+		cp	(hl)
+		ret	z
+		ld	(hl),d
+		inc	a
+		ret
+
+loc_760:	push	bc
+		push	hl
+		ld	b,0
+loc_764:	ld	hl,0
+loc_767:	dec	hl
+		ld	a,h
+		or	l
+		jr	z,loc_775
+		in	a,(VG_1F)
+		rrca
+		jr	c,loc_767
+		xor	a
+loc_772:	pop	hl
+		pop	bc
+		ret
+
+loc_775:	inc	b
+		ld	a,5
+		cp	b
+		jr	nz,loc_764
+		ld	hl,loc_772
+		push	hl
+sub_77F:	call	SEARCH_TRACK
+		ei
+		halt
+		ld	a,8
+		out	(VG_FF),a
+		ei
+		halt
+		call	SEARCH_TRACK
+		ei
+		halt
+		ld	a,0D8h
+		out	(VG_1F),a
+		ld	a,30h
+		scf
+		ret
+
+sub_797:	in	a,(VG_1F)
+		rrca
+		jr	nc,sub_797
+		ret
+
+SEARCH_TRACK:	ld	a,1Ch
+		out	(VG_FF),a
+		ret
+
+sub_7A2:	call	SEARCH_TRACK
+		ld	a,0Ch
+		call	COM2VG
+		jr	c,loc_7C8
+		in	a,(VG_1F)
+		and	14h
+		jr	z,loc_7CA
+		call	NEXT_TRACK
+		jr	c,loc_7C8
+		call	PREV_TRACK
+		jr	c,loc_7C8
+		xor	a
+		call	SET_TRACK
+		jr	c,loc_7C8
+		in	a,(VG_1F)
+		and	10h
+		jr	z,loc_7CA
+loc_7C8:	scf
+		ret
+
+loc_7CA:	xor	a
+		ret
+
+NEXT_TRACK:	call	SEARCH_TRACK
+		ld	a,4Ch
+		jr	COM2VG
+
+PREV_TRACK:	call	SEARCH_TRACK
+		ld	a,6Ch
+		jr	COM2VG
+
+;		ld	a,(TRACK)	;???
+SET_TRACK:	out	(VG_3F),a
+COM_AND_WAIT:	out	(VG_7F),a
+		call	SEARCH_TRACK
+		ld	a,1Ch
+COM2VG:		out	(VG_1F),a
+		call	sub_797
+		jp	loc_760
+
+sub_7EE:	ld	a,(TRACK)
+		call	COM_AND_WAIT
+		ret	c
+		in	a,(VG_1F)
+		and	10h
+		jr	z,loc_7CA
+		jr	loc_7C8
+
+sub_7FD:	call	sub_7EE
+		jr	c,loc_814
+		ld	a,(SECTOR)
+		out	(VG_5F),a
+		ld	hl,(ADR_READ_DISK)
+		ld	c,VG_7F
+		ld	a,b
+		ld	d,0C0h
+		out	(VG_1F),a
+		jp	sub_797
+
+loc_814:	pop	hl
+		push	af
+		cp	30h
+		jr	z,loc_81D
+		pop	af
+		jr	loc_845
+
+loc_81D:	pop	af
+		jr	loc_850
+
+READ_SECTOR:	push	bc
+		ld	b,86h
+		call	sub_7FD
+loc_826:	in	a,(VG_FF)
+		and	d
+		jr	z,loc_826
+		jp	m,loc_833
+		ini
+		jp	loc_826
+
+loc_833:	ld	b,1Ch
+		ld	de,(ADR_READ_DISK)
+		or	a
+		sbc	hl,de
+		ld	(SECTOR_SIZE),hl
+		in	a,(VG_1F)
+		and	b
+		jr	z,loc_845
+		scf
+loc_845:	push	af
+		cp	30h
+		jr	z,loc_84F
+		pop	af
+		push	af
+		call	c,sub_7A2
+loc_84F:	pop	af
+loc_850:	pop	bc
+		ret
+
+sub_852:	ld	b,8
+loc_854:	call	READ_SECTOR
+;		jr	nc,locret_860
+		RET NC
+		cp	30h
+		jr	z,loc_85F
+		djnz	loc_854
+loc_85F:	scf
+		ret
+
+READ_SECT_9:	call	sub_77F
+		ld	ix,byte_99DB
+		ld	hl,0
+		ld	(byte_99DB),hl
+		ld	(byte_99DD),hl
+		ld	hl,TRDOS_ADR_READ
+		ld	(ADR_READ_DISK),hl
+		ld	(ix+3),9
+		call	sub_7A2
+		jr	c,loc_88C
+		call	HALT_14
+		call	sub_852
+		jr	c,loc_88C
+		ld	a,(SECTOR_SIZE+1)
+		ret
+
+loc_88C:	call	sub_77F
+		ld	a,0FFh
+		ret
+
+sub_892:	ld	(ix+1),32h
+		jp	sub_7EE
+
+HALT_14:	ld	b,14h
+loc_89B:	ei
+		halt
+		djnz	loc_89B
+		ret
+
+loc_8AC:	ld	bc,6000h
+;		ld	a,b
+;		cp	80h
+;		jr	nz,loc_8B6
+;		ld	b,60h		;???
+;loc_8B6:	ld	de,0
+		LD D,C
+		LD E,C
+loc_8B9:	ld	hl,0
+		add	hl,bc
+loc_8BD:	ld	(hl),0
+		inc	hl
+		ld	a,h
+		cp	80h
+		jr	nz,loc_8BD
+		ld	hl,5800h
+loc_8C8:	ld	(hl),45h
+		inc	hl
+		ld	a,h
+		cp	5Dh
+		jr	nz,loc_8C8
+		dec	bc
+		ld	a,0FFh
+		ld	(bc),a
+		inc	bc
+		ld	hl,0
+		add	hl,bc
+loc_8D9:	ld	a,(hl)
+		and	a
+		jr	z,loc_8DE
+		inc	e
+loc_8DE:	inc	hl
+		ld	a,h
+		cp	80h
+		jr	nz,loc_8D9
+		ld	iy,6000h
+		ld	hl,4000h
+loc_8EB:	ld	a,(iy+0)
+		ld	(hl),a
+		inc	hl
+		inc	iy
+		ld	a,h
+		cp	58h
+		jr	nz,loc_8EB
+		ld	hl,0
+		add	hl,bc
+loc_8FB:	ld	(hl),0FFh
+		inc	hl
+		ld	a,h
+		cp	80h
+		jr	nz,loc_8FB
+		ld	hl,5800h
+loc_906:	ld	(hl),5
+		inc	hl
+		ld	a,h
+		cp	5Dh
+		jr	nz,loc_906
+		dec	bc
+		xor	a
+		ld	(bc),a
+		inc	bc
+;		ld	hl,0
+		LD H,A
+		LD L,A
+		add	hl,bc
+loc_916:	ld	a,(hl)
+		cp	0FFh
+		jr	z,loc_91C
+		inc	e
+loc_91C:	inc	hl
+		ld	a,h
+		cp	80h
+		jr	nz,loc_916
+		ld	iy,6000h
+		ld	hl,4000h
+loc_929:	ld	a,(iy+0)
+		cpl
+		ld	(hl),a
+		inc	hl
+		inc	iy
+		ld	a,h
+		cp	58h
+		jr	nz,loc_929
+		inc	bc
+		ld	h,b
+		ld	l,c
+		ld	bc,7FFEh
+		in	a,(c)
+		rra
+		jr	nc,loc_949
+		ld	c,l
+		ld	b,h
+		ld	a,c
+		cp	80h
+		jp	nz,loc_8B9
+loc_949:	ld	hl,4000h
+loc_94C:	ld	(hl),0
+		inc	hl
+		ld	a,l
+		and	a
+		jr	nz,loc_94C
+		ld	a,7
+		out	(0FEh),a
+		ld	sp,off_996
+		jp	sub_ABD
+
+loc_95D:	ld	a,r
+		rlca
+		jp	nc,loc_964
+		halt
+loc_964:	xor	a
+		ld	(byte_99ED),a
+		ld	sp,byte_7FFE
+		call	sub_998
+		call	sub_71F
+		and	a
+		jp	z,loc_8A2
+		call	sub_998
+		call	sub_9B9
+		ld	sp,off_994
+		ld	de,0ACFh
+		jp	SET_CONF_PORTS			; запись в порты DFFD,7FFD
+
+loc_984:	ld	sp,WORK_STACK
+		ld	hl,0
+		push	hl
+		call	sub_2ADC
+		call	CLS
+		jp	TESTER_MEMORY
+
+sub_998:	pop	ix
+		ld	b,96h
+loc_99C:	ei
+		halt
+		ld	d,b
+		ld	bc,0EFFEh
+		in	a,(c)
+		bit	2,a
+		jr	nz,loc_9AA
+		jp	(ix)
+
+loc_9AA:	ld	b,d
+		djnz	loc_99C
+		jp	(ix)
+
+CLS:		xor	a
+		call	sub_1CAD
+		ld	c,0Ch
+		RST 8
+		ret
+
+sub_9B9:	LD HL,0X4000
+		LD DE,0X4001
+		LD BC,0X1AFF
+		LD (HL),L
+		LDIR
+;		ld	hl,5AFFh
+;		ld	de,5AFEh
+;		ld	bc,1AFFh
+;		ld	(hl),0
+;		lddr
+		ret
+
+sub_9C7:	xor	a
+		jr	loc_9CC
+
+sub_9CA:	ld	a,0FFh
+loc_9CC:	ld	r,a
+loc_9CE:	di
+		call	READ_KEYS
+		jr	c,loc_9CE
+		cp	0Dh
+		ret	z
+		cp	'8'
+		jr	z,loc_9DF
+		cp	1Bh
+		jr	nz,loc_9CE
+loc_9DF:
+;		pop	de
+		ld	a,r
+		rlca
+		jr	nc,loc_9EC
+loc_9E5:	ld	sp,(byte_7FFE)
+		call	sub_9B9
+loc_9EC:	ld	bc,PROFI_CONF
+		ld	de,0ACFh
+		out	(c),e
+		ld	b,7Fh
+		out	(c),d
+		ld	a,7
+		out	(0FEh),a
+		ret
+
+TESTER_VIDEO:	di
+		ld	bc,PROFI_CONF
+		ld	de,207h
+		out	(c),e
+		ld	b,7Fh
+		out	(c),d
+		ld	(byte_7FFE),sp
+		ld	sp,byte_7FFC
+		call	sub_9B9
+		ld	hl,0C000h
+		ld	a,55h
+		ld	(hl),a
+		cp	(hl)
+		jr	nz,loc_A4E
+		cpl
+		ld	(hl),a
+		cp	(hl)
+		jr	nz,loc_A4E
+		ld	a,1
+		out	(0FEh),a
+		ld	de,0C001h
+		ld	bc,3FFFh
+		ld	(hl),55h
+		ldir
+		ld	hl,0C000h
+		ld	bc,4000h
+		ld	d,55h
+loc_A38:	ld	a,d
+		cp	(hl)
+		jp	nz,loc_22B8
+		cpl
+		ld	(hl),a
+		cp	(hl)
+		jp	nz,loc_22B8
+;		ld	(hl),0
+		XOR A
+		LD (HL),A
+		inc	hl
+		dec	bc
+;		xor	a
+		cp	b
+		jr	nz,loc_A38
+		cp	c
+		jr	nz,loc_A38
+loc_A4E:	RST20 400h				; запись в порты DFFD,7FFD
+		ld	a,7
+		out	(0FEh),a
+		call	sub_A9C
+		xor	a
+		ld	(byte_99ED),a
+loc_A5F:	call	COL_LINE_BORDER
+		di
+		call	READ_KEYS
+		jr	c,loc_A5F
+;		cp	'8'
+;		jp	z,loc_9E5
+;		cp	1Bh
+;		jp	z,loc_9E5
+		cp	0Dh
+		jr	nz,loc_A5F
+		call	sub_AF4
+		call	sub_9CA
+		call	sub_9B9
+		ld	sp,(byte_7FFE)
+		ld	bc,PROFI_CONF
+		ld	de,0ACFh
+		out	(c),e
+		ld	b,7Fh
+		out	(c),d
+		call	sub_B5D
+		call	sub_9C7
+		call	sub_BCE
+		JP	sub_9C7
+
+sub_A9C:	call	sub_ABD
+		RST30 0D01h
+		ld	de,4000h
+		ld	(ADR_SCR_PIX),de
+		ld	hl,asc_35C3			; " Тест Атрибутов !!! "
+		call	PRINT_SYM_SPACE
+		ld	hl,5826h
+		ld	bc,14h
+		ld	a,47h
+		jp	FILL_MEM
+
+sub_ABD:	ld	hl,4000h
+		ld	de,4001h
+		ld	bc,17FFh
+;		ld	(hl),0FFh
+		LD (HL),C
+		ldir
+		ld	hl,5800h
+		exx
+		ld	b,18h
+loc_AD0:	exx
+		ld	a,47h
+		ld	b,8
+loc_AD5:	ld	(hl),a
+		inc	hl
+		ld	(hl),a
+		ld	d,a
+		ex	af,af'
+		ld	a,d
+		res	6,a
+		ld	de,0Fh
+		add	hl,de
+		ld	(hl),a
+		inc	hl
+		ld	(hl),a
+		ex	af,af'
+;		scf
+;		ccf
+		AND A
+		sbc	hl,de
+		dec	a
+		djnz	loc_AD5
+		ld	bc,10h
+		add	hl,bc
+		exx
+		djnz	loc_AD0
+		ret
+
+sub_AF4:	call	sub_9B9
+		xor	a
+		out	(0FEh),a
+		RST30 100h
+		ld	bc,720h
+loc_B03:	push	bc
+		ld	c,0Ah
+		RST 8
+		pop	bc
+		push	bc
+		ld	b,20h
+loc_B0D:	push	bc
+		RST 8
+		ld	c,' '
+		RST 8
+		pop	bc
+		inc	c
+		djnz	loc_B0D
+		ld	a,c
+		pop	bc
+		ld	c,a
+		djnz	loc_B03
+		RST30 0D13h
+		ld	hl,asc_35D8			; "Символьный Тест !!!"
+		call	PRINT_SYM_SPACE
+		RST30 916h
+		ld	hl,asc_35EC			; "Для продолжения нажмите"
+		call	PRINT_SYM_SPACE
+		RST30 0D17h
+		ld	hl,asc_3604			; "клавишу "
+		call	PRINT_SYM_SPACE
+		ld	hl,5800h
+		ld	de,5801h
+		ld	bc,2FFh
+		ld	(hl),47h
+		ldir
+		ld	a,1
+		ld	(FLAG_PRESS_KEY),a
+		ld	b,1Eh
+loc_B57:	ei
+		inc	a
+		halt
+		djnz	loc_B57
+		ret
+
+sub_B5D:	ld	de,PIX_SCR
+		ld	(ADR_SCR_PIX),de
+		ld	(ADR_SCR_COL),de
+		ld	l,0FFh
+		ld	bc,0
+		push	bc
+		ld	de,1E40h
+		call	FILL_COLOR_WIN
+		ld	de,4000h
+		ld	(ADR_SCR_COL),de
+		xor	a
+		out	(0FEh),a
+		pop	bc
+		ld	l,7Fh
+		ld	de,1E04h
+		ld	h,8
+loc_B86:	push	hl
+		push	de
+		push	bc
+		push	hl
+		push	bc
+		push	de
+		call	FILL_COLOR_WIN
+		pop	de
+		pop	bc
+		pop	hl
+		ld	a,c
+		add	a,20h
+		ld	c,a
+		res	6,l
+		call	FILL_COLOR_WIN
+		pop	bc
+		pop	de
+		pop	hl
+		set	6,l
+		LD A,L
+		SUB 9
+		LD L,A
+;		rrc	l
+;		rrc	l
+;		rrc	l
+;		dec	l
+;		rlc	l
+;		rlc	l
+;		rlc	l
+;		dec	l
+		ld	a,c
+		add	a,4
+		ld	c,a
+		dec	h
+		jp	nz,loc_B86
+		RST30 0C02h
+		ld	hl,asc_35C3			; " Тест Атрибутов !!! "
+		call	PRINT_SYM_SPACE
+		ld	l,47h
+		ld	bc,20Ch
+		ld	de,126h
+		JP	FILL_COLOR_WIN
+
+sub_BCE:	ld	a,7
+		out	(0FEh),a
+		call	CLS
+		ld	a,47h
+		call	sub_1CAD
+		RST30 100h
+		ld	bc,720h
+loc_BE3:	push	bc
+		ld	c,0Ah
+		RST 8
+		pop	bc
+		push	bc
+		ld	b,20h
+loc_BED:	push	bc
+		RST 8
+		ld	c,' '
+		RST 8
+		pop	bc
+		inc	c
+		djnz	loc_BED
+		ld	a,c
+		pop	bc
+		ld	c,a
+		djnz	loc_BE3
+		RST30 0D1Ah
+		ld	hl,asc_35D8			; "Символьный Тест !!!"
+		call	PRINT_SYM_SPACE
+		RST30 91Dh
+		RST18 asc_35EC				; "Для продолжения нажмите"
+		ld	c,' '
+		RST 8
+		RST18 asc_3604				; "клавишу "
+		RET
+
+loc_C22:	ld	a,(byte_99E7)
+		and	a
+		jp	nz,loc_C90
+		push	bc
+		ld	bc,(word_99E5)
+		push	bc
+		ld	b,0
+		ld	a,c
+		sub	0Dh
+		add	a,a
+		ld	c,a
+		ld	de,byte_9CC0
+		ex	de,hl
+		add	hl,bc
+		ld	(hl),e
+		inc	hl
+		ld	(hl),d
+		inc	hl
+		pop	ix
+		pop	bc
+		push	bc
+		push	ix
+		ld	(hl),b
+		inc	hl
+		ld	(hl),c
+		ex	de,hl
+		pop	bc
+		push	bc
+		push	hl
+		RST 0x30
+		pop	bc
+		call	sub_2BA5
+		ld	c,':'
+		RST 8
+		ld	c,' '
+		RST 8
+		pop	de
+		pop	bc
+		push	de
+		push	bc
+		ld	c,b
+		call	PRINT_HEX2TXT
+		ld	c,'H'
+		RST 8
+		pop	de
+		pop	bc
+		inc	c
+		ld	b,21h
+		push	bc
+		push	de
+		RST 0x30
+		pop	de
+		ld	c,e
+		call	PRINT_HEX2TXT
+		ld	c,'H'
+		RST 8
+		pop	bc
+		ld	b,1Bh
+		ld	a,c
+		inc	c
+		ld	(word_99E5),bc
+		cp	1Ch
+		ret	nz
+		ld	a,1
+		ld	(byte_99E7),a
+		ret
+
+loc_C90:	push	bc
+		push	hl
+		ld	a,(byte_99EC)
+		and	a
+		jr	z,loc_CA6
+		ld	bc,0EFFEh
+		in	a,(c)
+		rra
+		jr	c,loc_CD5
+		xor	a
+		ld	(byte_99EC),a
+		jr	loc_CD5
+
+loc_CA6:	RST30 1A0Ah
+		RST10 "Any  key..."
+loc_CBB:	call	WAIT_KEY
+		di
+		cp	'0'
+		jr	z,loc_CBB
+		cp	'9'
+		jr	nz,loc_CCA
+		ld	(byte_99EC),a
+loc_CCA:	RST30 1A0Ah
+		ld	c,3
+loc_CD2:	RST 8
+loc_CD5:	ld	de,byte_9CC0
+		ld	hl,byte_9CC4
+		ld	bc,1Ch
+		ldir
+		ex	de,hl
+		pop	bc
+		ld	(hl),c
+		inc	hl
+		ld	(hl),b
+		inc	hl
+		pop	de
+		ld	(hl),d
+		inc	hl
+		ld	(hl),e
+		ld	b,8
+		ld	de,1B0Dh
+		ld	hl,byte_9CC0
+loc_CF2:	push	bc
+		push	de
+		push	hl
+		push	de
+		pop	bc
+		RST 0x30
+		pop	hl
+		ld	c,(hl)
+		inc	hl
+		ld	b,(hl)
+		inc	hl
+		push	hl
+		call	sub_2BA5
+		ld	c,':'
+		RST 8
+		ld	c,' '
+		RST 8
+		pop	hl
+		ld	a,(hl)
+		inc	hl
+		pop	bc
+		push	bc
+		push	hl
+		push	bc
+		ld	c,a
+		call	PRINT_HEX2TXT
+		ld	c,'H'
+		RST 8
+		pop	bc
+		inc	c
+		ld	b,21h
+		RST 0x30
+		pop	hl
+		ld	c,(hl)
+		inc	hl
+		push	hl
+		call	PRINT_HEX2TXT
+		ld	c,'H'
+		RST 8
+		pop	hl
+		pop	de
+		pop	bc
+		ld	d,1Bh
+		inc	e
+		inc	e
+		dec	b
+		JR	NZ,loc_CF2
+		ret
+
+sub_D3C:	push	bc
+		ld	a,c
+		and	7
+		ld	b,a
+		add	a,a
+		add	a,b
+		add	a,27h
+		ld	b,a
+		ld	a,c
+		srl	a
+		srl	a
+		srl	a
+		add	a,a
+		add	a,0Dh
+		ld	c,a
+		push	bc
+		call	INVERS_SYMSCR
+		pop	bc
+		push	bc
+		inc	b
+		call	INVERS_SYMSCR
+		pop	bc
+		pop	de
+		ld	a,d
+		and	a
+		jr	z,loc_D65
+		ld	l,0D8h
+		jr	loc_D76
+
+loc_D65:	ld	hl,byte_9AC0
+		ld	d,0
+		add	hl,de
+		ld	a,(hl)
+		cp	3
+		jr	z,loc_D74
+		ld	l,6
+		jr	loc_D76
+
+loc_D74:	ld	l,0C2h
+loc_D76:	ld	a,b
+		ld	b,c
+		ld	c,a
+		ld	de,102h
+		jp	FILL_COLOR_WIN
+
+loc_D7F:	ld	hl,byte_99EE
+		ld	c,0
+loc_D84:	push	hl
+		push	bc
+		ld	a,(hl)
+		cp	'-'
+		jr	z,loc_DBB
+		cp	'?'
+		jr	z,loc_DCF
+		cp	'5'
+		jr	z,loc_DA7
+		ld	a,c
+		call	sub_DEB
+		push	bc
+		RST10 "РУ7"
+		pop	bc
+		pop	de
+		push	de
+		call	sub_DFD
+		jr	loc_DE1
+
+loc_DA7:	ld	a,c
+		call	sub_DEB
+		push	bc
+		RST10 "РУ5"
+		pop	bc
+		pop	de
+		push	de
+		call	sub_DFD
+		jr	loc_DE1
+
+loc_DBB:	ld	a,c
+		call	sub_DEB
+		push	bc
+		RST10 "---"
+		pop	bc
+		pop	de
+		push	de
+		call	sub_DFD
+		jr	loc_DE1
+
+loc_DCF:	ld	a,c
+		call	sub_DEB
+		push	bc
+		RST10 "???"
+		pop	bc
+		pop	de
+		push	de
+		call	sub_DFD
+loc_DE1:	pop	bc
+		pop	hl
+		inc	hl
+		inc	c
+		bit	2,c
+		JR	Z,loc_D84
+		ret
+
+sub_DEB:	ld	e,a
+		add	a,a
+		add	a,e
+		add	a,a
+		add	a,2
+		ld	e,a
+		ld	b,a
+		ld	c,1Ch
+		RST 0x30
+		inc	e
+		ld	b,e
+		ld	c,0Bh
+		ret
+
+sub_DFD:	ld	hl,byte_9DC0
+sub_E00:	rlc	e
+		rlc	e
+		rlc	e
+		ld	d,0
+		add	hl,de
+		ld	e,0
+loc_E0B:	push	bc
+		push	de
+		push	hl
+		RST 0x30
+		call	sub_E21
+		pop	hl
+		pop	de
+		pop	bc
+		inc	hl
+		inc	c
+		inc	c
+		inc	e
+		ld	a,e
+		cp	8
+		jr	nz,loc_E0B
+		ret
+
+sub_E21:	ld	a,(hl)
+		and	a
+		jr	z,loc_E3D
+		cp	0FFh
+		jr	z,loc_E37
+		ld	de,4000h
+		ld	l,0C2h
+		call	FILL_SYM
+		ld	c,'▒'
+		RST 8
+		ret
+
+loc_E37:	ld	c,'-'
+		RST 8
+		ret
+
+loc_E3D:	ld	c,'░'
+		RST 8
+		ret
+
+COL_LINE_BORDER:ld	a,1
+		ld	(FLAG_PRESS_KEY),a
+		ei
+		dec	a
+		halt
+		ld	(FLAG_PRESS_KEY),a
+		call	PAUSE_5A
+		call	PAUSE_5A
+		call	PAUSE_5A
+		call	PAUSE_5A
+		ld	b,8
+loc_E5C:	out	(0FEh),a
+		call	PAUSE_5A
+		inc	a
+		djnz	loc_E5C
+		ret
+
+PAUSE_5A:	push	bc
+		ld	b,5Ah
+loc_E68:	ex	(sp),hl
+		ex	(sp),hl
+		djnz	loc_E68
+		pop	bc
+		ret
+
+TESTER_PCKEYS:	RST28 byte_1293				; цветовое поле	XT клавиатуры
+		RST30 1201h
+		RST18 unk_3535
+		RST30 1202h
+		RST10 "║\1"
+		RST18 asc_350A				; "Тест  XT - клавиатуры"
+		RST10 "\1║"
+		RST30 1203h
+		RST18 unk_353B
+		RST30 1204h
+		RST10 "║\2Выход: Ctrl+'C'\1\1║"
+		RST30 1205h
+		RST18 unk_3540
+		ld	bc,112h
+		ld	de,51Dh
+		call	INVERS_WINDOW
+		ld	hl,byte_387A
+		call	DRAW_VERT_LINE
+		RST30 9
+		RST 0x10
+		DB " ╓\5╖  ╓──╖╓──╖╓──╖╓──╖  ╓──╖╓──╖╓──╖╓──╖  ╓──╖╓\5╖╓\5╖╓\5╖  "
+		DB "║ESC║  ║F1\7F2\7F3\7F4║  ║F5\7F6\7F7\7F8║  ║F9\7F10\7F11\7F12║  "
+		DB  "╙\5╜  ╙──╜╙──╜╙──╜╙──╜  ╙──╜╙──╜╙──╜╙──╜  ╙──╜╙\5╜╙\5╜╙\5╜ \xA\1 \x14\xB"
+		DB "╓\5─╖  ╓\5╖╓\5╖╓\5╖ \1 ║1\7","2\7","3\7","4\7","5\7","6\7","7\7","8\7","9\7"
+		DB "0\7-\7=\7 BS ║  ║INS\7HOM\7PUp║ \1 \x15\xE"
+		db "╙\5─╜  ╙\5╜╙\5╜╙\5╜  ╓\5╖\X14\XB\2╓\5╖╓\5╖╓\5╖  "
+		DB "║TAB\7","Q\7W\7E\7R\7T\7Y\7U\7I\7O\7P\7[\7]║\2║DEL\7END\7PDn║  "
+		DB "╙\5╜\x15\xE\2╙\5╜╙\5╜╙\5╜  ╓\5──╖\x14╓\5╖\r\n"
+		DB " ║CpLoc\7","A\7S\7","D\7","F\7G\7H\7J\7K\7L\7;\7'\7ENT║\r\n"
+		DB " ╙\5──╜\x15╙\5╜\r\n ╓\5\5╖\x14\3╓\5╖\r\n"
+		DB " ║Shift \7Z\7X\7","C\7V\7","B\7N\7M\7,\7.\7/\7\\║\3║UP ║\r\n"
+		DB " ╙\5\5╜\x15\3╙\5╜\r\n ╓\5─╖  ╓\5╖╓\x17\x17\5──╖╓\5╖\1  "
+		DB "╓──╖╓\5╖╓──╖   ║Ctrl║  ║Alt\7\3\3 \7Alt║\1  ║LF\7DWN\7RT║   "
+		DB "╙\5─╜  ╙\5╜╙\x17\x17\5──╜╙\5╜\1  ╙──╜╙\5╜╙──╜  \n\0"
+		ld	hl,byte_3883
+		call	DRAW_VERT_LINE
+		call	sub_1183
+loc_1129:	ld	b,0
+		call	sub_11F0
+		ld	b,1
+		call	sub_11F0
+loc_1133:	call	sub_1206
+		di
+		call	READ_KEYS
+		ei
+		halt
+		cp	0FFh
+		jr	z,loc_1129
+		call	sub_127A
+		cp	3
+		ret	z
+		ld	l,a
+		ld	h,0
+		ld	b,h
+;		scf
+;		ccf
+		AND A
+		rl	l
+		rl	h
+		ld	de,byte_334A
+		add	hl,de
+		ld	de,word_99D0
+loc_1157:	push	hl
+		ld	a,(de)
+		ld	c,(hl)
+		cp	c
+		jr	z,loc_1177
+		ld	a,c
+		cp	0FFh
+		push	af
+		push	de
+		push	bc
+		call	sub_11F0
+		pop	bc
+		pop	de
+		ld	a,c
+		ld	(de),a
+		pop	af
+		jr	z,loc_1177
+		push	de
+		push	bc
+		ld	b,c
+		ld	c,0FBh
+		call	sub_119A
+		pop	bc
+		pop	de
+loc_1177:	pop	hl
+		inc	hl
+		inc	de
+		ld	a,b
+		inc	a
+		ld	b,a
+		cp	2
+		jr	nz,loc_1157
+		jr	loc_1133
+
+sub_1183:	ld	hl,0C000h
+		ld	de,0C001h
+		ld	bc,4Dh
+;		ld	(hl),0
+		LD (HL),B
+		ldir
+		ld	hl,0FFFFh
+		ld	(word_99D0),hl
+		xor	a
+		ld	r,a
+		ret
+
+sub_119A:	push	bc
+		ld	a,b
+		and	7
+		ld	e,a
+		ld	d,0
+		ld	hl,byte_12E2
+		add	hl,de
+		ld	a,b
+		ld	b,(hl)
+		push	bc
+		ld	b,a
+		call	sub_1257
+		pop	bc
+		ld	hl,byte_32FC
+		add	hl,de
+		ld	a,(hl)
+		ld	l,a
+		and	3Fh
+		ld	c,a
+		ld	a,l
+		pop	hl
+		ld	d,e
+		push	de
+		push	bc
+		push	hl
+		and	0C0h
+		rl	h
+		rla
+		rla
+		rla
+		ld	e,a
+		ld	d,0
+		ld	hl,byte_12DA
+		add	hl,de
+		ld	e,(hl)
+		ld	d,3
+		pop	hl
+		pop	bc
+		pop	af
+		push	de
+		push	bc
+		ld	b,l
+		ld	e,a
+		ld	d,0
+		ld	hl,0C000h
+		add	hl,de
+		ld	a,(hl)
+		rlca
+		ld	a,b
+		pop	bc
+		pop	de
+		jr	c,loc_11EC
+		push	af
+		ld	(hl),80h
+		push	bc
+		push	de
+		call	INVERS_WINDOW
+		pop	de
+		pop	bc
+		pop	af
+loc_11EC:	ld	l,a
+		jp	FILL_COLOR_WIN
+
+sub_11F0:	ld	e,b
+		ld	d,0
+		ld	hl,word_99D0
+		add	hl,de
+		ld	a,(hl)
+		cp	0FFh
+		ret	z
+		push	hl
+		ld	b,a
+		ld	c,0CFh
+		call	sub_119A
+		pop	hl
+		ld	(hl),0FFh
+		ret
+
+sub_1206:	ld	bc,4E00h
+		ld	hl,0C000h
+loc_120C:	ld	a,(hl)
+		rlca
+		jr	nc,loc_1211
+		inc	c
+loc_1211:	inc	hl
+		djnz	loc_120C
+		ld	a,c
+		cp	4Eh
+		ret	nz
+		ld	a,r
+		rlca
+		ret	c
+		scf
+		rra
+		ld	r,a
+		ld	l,0F2h
+		ld	bc,300h
+		ld	de,311h
+		call	FILL_COLOR_WIN
+		ld	hl,byte_388C
+		call	DRAW_VERT_LINE
+		ld	hl,byte_389D
+		call	DRAW_HORZ_LINE
+		RST30 204h
+		RST10 "Тест завершен"
+		ld	bc,300h
+		ld	de,311h
+		jp	INVERS_WINDOW
+
+sub_1257:	push	bc
+		ld	a,b
+		ld	e,0
+		and	7
+		jr	z,loc_1269
+		ld	b,a
+		xor	a
+		ld	hl,byte_1275
+loc_1264:	add	a,(hl)
+		inc	hl
+		djnz	loc_1264
+		ld	e,a
+loc_1269:	pop	bc
+		ld	a,b
+		and	78h
+		rrca
+		rrca
+		rrca
+		add	a,e
+		ld	e,a
+		ld	d,0
+		ret
+
+sub_127A:	ld	b,a
+		ld	a,(PRESSED_KEY)
+		bit	6,a
+		ld	a,b
+		ret	z
+		ld	b,a
+		ld	hl,byte_3494
+loc_1286:	ld	a,(hl)
+		and	a
+		ret	z
+		cp	b
+		jr	z,loc_1290
+		inc	hl
+		inc	hl
+		jr	loc_1286
+
+loc_1290:	inc	hl
+		ld	a,(hl)
+		ret
+
+sub_12E8:	jr	nc,loc_1302
+		ld	a,1
+		ld	c,b
+		ld	b,5
+loc_12EF:	push	af
+		push	bc
+		and	c
+		jr	z,loc_12F9
+		call	sub_1321
+		jr	loc_12FC
+
+loc_12F9:	call	sub_131A
+loc_12FC:	pop	bc
+		pop	af
+		rlca
+		djnz	loc_12EF
+		ret
+
+loc_1302:	ld	a,10h
+		ld	c,b
+		ld	b,5
+loc_1307:	push	af
+		push	bc
+		and	c
+		jr	z,loc_1311
+		call	sub_1321
+		jr	loc_1314
+
+loc_1311:	call	sub_131A
+loc_1314:	pop	bc
+		pop	af
+		rrca
+		djnz	loc_1307
+		ret
+
+sub_131A:	RST10 "0 "
+		ret
+
+sub_1321:	RST10 "1 "
+		ret
+
+sub_1328:	RST30 150Bh
+		ld	bc,0F7FEh
+		in	a,(c)
+		cpl
+		ld	b,a
+		scf
+		call	sub_12E8
+		RST10 "  "
+		ld	bc,0EFFEh
+		in	a,(c)
+		cpl
+		ld	b,a
+		call	sub_12E8
+		RST30 150Dh
+		ld	bc,0FBFEh
+		in	a,(c)
+		cpl
+		ld	b,a
+		scf
+		call	sub_12E8
+		RST10 "  "
+		ld	bc,0DFFEh
+		in	a,(c)
+		cpl
+		ld	b,a
+		call	sub_12E8
+		RST30 150Fh
+		ld	bc,0FDFEh
+		in	a,(c)
+		cpl
+		ld	b,a
+		scf
+		call	sub_12E8
+		RST10 "  "
+		ld	bc,0BFFEh
+		in	a,(c)
+		cpl
+		push	af
+		ld	b,a
+		call	sub_12E8
+		RST30 1511h
+		ld	bc,0FEFEh
+		in	a,(c)
+		cpl
+		ld	b,a
+		scf
+		call	sub_12E8
+		RST10 "  "
+		ld	bc,7FFEh
+		in	a,(c)
+		cpl
+		ld	b,a
+		call	sub_12E8
+		pop	af
+		ret
+
+TESTKEYS:	ld	de,4000h
+		ld	(ADR_SCR_PIX),de
+		ld	sp,byte_7FFD
+		call	sub_141B
+		ld	bc,300h
+loc_13BF:	ld	(Y_COORD),bc
+		ld	hl,asc_3552			; "Выход только через "
+		call	PRINT_SYM_SPACE
+		ld	de,5801h
+		ld	hl,5800h
+		ld	bc,1Fh
+		ld	(hl),46h
+		ldir
+		inc	hl
+		inc	de
+		ld	bc,2E0h
+		ld	(hl),42h
+		ldir
+		ld	hl,5928h
+		ld	b,0Bh
+loc_13E4:	push	bc
+		push	hl
+		push	hl
+		pop	de
+		inc	de
+		ld	bc,0Eh
+		ld	(hl),4Dh
+		ldir
+		pop	hl
+		ld	de,20h
+		add	hl,de
+		pop	bc
+		djnz	loc_13E4
+loc_13F8:	call	sub_1328
+		bit	5,a
+		jr	z,loc_140D
+		RST30 1517h
+		ld	hl,asc_3546			; "6-й бит !!!"
+		call	PRINT_SYM_SPACE
+		jr	loc_13F8
+
+loc_140D:	RST30 1517h
+		RST10 "\3\3"
+		jr	loc_13F8
+
+sub_141B:	RST30 1109h
+		RST18 unk_3535
+		RST30 1113h
+		RST18 unk_3540
+		ld	b,9
+		ld	de,unk_353B
+		ld	hl,110Ah
+loc_143B:	push	bc
+		push	hl
+		pop	bc
+		push	bc
+		push	de
+		RST 0X30
+		RST 0x18
+		pop	de
+		pop	hl
+		inc	l
+		pop	bc
+		djnz	loc_143B
+		ret
+
+PRINT_SYM_SPACE:push	hl
+		ld	a,(hl)
+		and	a
+		jr	z,loc_145F
+		ld	c,a
+		RST 8
+		ld	c,' '
+		RST 8
+		pop	hl
+		inc	hl
+		jr	PRINT_SYM_SPACE
+
+loc_145F:	pop	hl
+		ret
+
+PRINT_XORTEXT:	
+;		ex	de,hl
+;		ld	e,(hl)
+;		inc	hl
+;		ld	d,(hl)
+;		ex	de,hl
+;		push	hl
+;		ld	b,42h
+;		xor	a
+;loc_146A:	add	a,(hl)
+;		inc	hl
+;		djnz	loc_146A
+;		sub	0C9h
+;		ld	c,a
+;		ld	a,(hl)
+;		xor	4Ah
+;		cpl
+;		cp	c
+;		jp	nz,COL_SCR
+		RST30 1Dh
+;		pop	hl
+;		ld	e,4Ah
+;		ld	b,40h
+;loc_1484:	push	hl
+;		push	de
+;		push	bc
+;		ld	a,(hl)
+;		xor	e
+;		cpl
+;		ld	c,a
+;		call	PRINT_C_
+;		pop	bc
+;		pop	de
+;		pop	hl
+;		inc	e
+;		inc	hl
+;		djnz	loc_1484
+		RST 0x18
+		ld	hl,byte_37F5
+		call	DRAW_VERT_LINE
+		ld	bc,1D00h
+		ld	de,140h
+		call	INVERS_WINDOW
+		RST28 byte_386F
+		RET
+
+; рисование левого меню
+DRAW_MAINMENU:	LD HL,ZASTAVKA
+		LD DE,0xC000
+		CALL DEC40
+		call	CLS
+		ld	de,ADR_SCR_L
+		ld	(ADR_SCR_COL),de
+;		call	UNPACK_LOGO
+		ld	bc,14h
+		ld	de,817h
+		ld	hl,0C000h
+		call	OUT_LOGO
+		ld	de,4000h
+		ld	(ADR_SCR_COL),de
+		ld	l,0C7h
+		ld	bc,14h
+		ld	de,817h
+		call	FILL_COLOR_WIN
+		ld	hl,TABL_COLOR_LOGO
+loc_14D8:
+;		ld	a,(hl)
+;		and	a
+;		ret	z
+;		ld	e,a
+		LD E,(HL)
+		inc	hl
+		ld	d,(hl)
+		LD A,D
+		OR E
+		RET Z
+		push	de
+		inc	hl
+		ld	b,(hl)
+		inc	hl
+		ld	c,(hl)
+		inc	hl
+		ld	d,(hl)
+		inc	hl
+		ld	e,(hl)
+		inc	hl
+		ex	(sp),hl
+		call	PRINT_COLOR
+		pop	hl
+		jr	loc_14D8
+
+DRAW_LEFT_MENU:	ld	bc,0A01h
+		ld	de,113Eh
+		call	INVERS_WINDOW
+		ld	hl,byte_37FE
+		call	DRAW_VERT_LINE
+		ld	hl,byte_3807
+		call	DRAW_HORZ_LINE
+		ld	l,0C5h
+		ld	bc,900h
+		ld	de,1340h
+loc_150C:	call	FILL_COLOR_WIN
+		ld	bc,0A04h
+		ld	de,101Bh
+		call	INVERS_WINDOW
+		ld	hl,byte_3810
+		call	DRAW_VERT_LINE
+		ld	hl,byte_3821
+		call	DRAW_HORZ_LINE
+		ld	bc,0A05h
+		ld	de,119h
+		call	INVERS_WINDOW
+		ld	bc,1905h
+		ld	de,119h
+		call	INVERS_WINDOW
+		ld	bc,0A04h
+		ld	de,1001h
+		call	INVERS_WINDOW
+		ld	bc,0A1Eh
+		ld	de,1001h
+		call	INVERS_WINDOW
+		RST30 0B0Bh
+		RST10 "Основное Меню"
+		ld	bc,0B05h
+		ld	de,119h
+		call	INVERS_WINDOW
+		ld	hl,byte_382A
+		call	DRAW_HORZ_LINE
+		RST28 byte_37B7
+		ld	de,ADR_SCR_L
+		ld	(ADR_SCR_COL),de
+		ld	hl,byte_361E
+		ld	bc,0C1Eh
+		ld	de,0D01h
+		call	PRINT_COLOR
+		ld	hl,byte_3626
+		ld	bc,1906h
+		ld	de,119h
+		call	PRINT_COLOR
+		ld	de,4000h
+		ld	(ADR_SCR_COL),de
+		ld	l,0CDh
+		ld	bc,0C1Eh
+		ld	de,0E01h
+		call	FILL_COLOR_WIN
+		ld	hl,byte_362E
+		ld	bc,1906h
+		ld	de,118h
+		call	PRINT_COLOR
+		ld	hl,byte_B82F
+		ld	(hl),0AAh
+		ld	hl,byte_3833
+		call	DRAW_VERT_LINE
+		RST30 70Eh
+		RST18 asc_16DC				; "Загрузка системы CP/M"
+		RST30 710h
+		RST18 asc_164F				; "Переход в "
+		RST10 "TR-DOS 48K"
+		RST30 711h
+		RST18 asc_164F				; "Переход в "
+		RST10 "TR-DOS 128K"
+		RST30 713h
+		RST18 asc_164F				; "Переход в "
+		RST10 "Sinclair 48"
+		RST30 714h
+		RST18 asc_164F				; "Переход в "
+		RST10 "Sinclair128"
+		RST30 716h
+		RST18 asc_164F				; "Переход в "
+		RST10 "Меню Тестов"
+		ret
+
+;		call	DRAW_MAINMENU			; рисование левого меню	;???
+loc_165D:	ld	de,COPYRIGHT2;1
+		call	PRINT_XORTEXT
+		call	DRAW_LEFT_MENU
+		ld	b,0
+		push	bc
+		ld	l,COL_CURS_DRAW;0CFh
+		call	COLOR_CURSOR_L
+loc_166E:	call	WAIT_KEY
+		cp	'8'				; курсор вниз
+		jr	z,LEFT_DOWN
+		cp	1Ah				; курсор вниз
+		jr	z,LEFT_DOWN
+		cp	'9'				; курсор вверх
+		jp	z,LEFT_UP
+		cp	19h				; курсор вверх
+		jp	z,LEFT_UP
+		cp	0Dh				; выбор
+		jp	z,SELECT_LEFT
+		cp	'0'				; выбор
+		jp	z,SELECT_LEFT
+		jr	loc_166E
+
+COLOR_CURSOR_L:	push	hl
+		ld	e,b
+		ld	d,0
+		ld	hl,X_POSCUR_L			; X позиция курсора для	левого окна
+		add	hl,de
+		ld	b,(hl)
+		ld	c,6
+		ld	de,117h
+		pop	hl
+COLOR_CURSOR	PUSH HL
+		PUSH DE
+		PUSH BC
+		CALL INVERS_WINDOW
+		POP BC
+		POP DE
+		POP HL
+		jp	FILL_COLOR_WIN
+
+LEFT_DOWN:	pop	bc
+		ld	a,5
+		cp	b
+		jr	z,loc_16BA
+		ld	c,b
+		inc	c
+loc_16A9:	push	bc
+		ld	l,COL_CURS_DEL;0xCF;%11111000;0F8h
+		call	COLOR_CURSOR_L
+		pop	bc
+		ld	b,c
+		push	bc
+		ld	l,COL_CURS_DRAW;0xF8;%11001111;0CFh
+		call	COLOR_CURSOR_L
+		jp	loc_166E
+
+loc_16BA:	ld	c,0
+		jr	loc_16A9
+
+LEFT_UP:	pop	bc
+		xor	a
+		cp	b
+		jr	z,loc_16C7
+		ld	c,b
+		dec	c
+		jr	loc_16A9
+
+loc_16C7:	ld	c,5
+		jr	loc_16A9
+
+SELECT_LEFT:	pop	bc
+		ld	a,b
+		and	a
+		jr	z,START_CPM
+		cp	5
+		jp	nz,SPECTRUM_MODE
+		push	bc
+		call	RIGHT_MENU
+		jp	loc_166E
+
+START_CPM:	push	bc
+		CALL SELECT_STARTDEV
+		JR C,NO_DISK
+		call	CLS
+		ld	l,0C7h
+		ld	bc,0
+		ld	de,119h
+		call	FILL_COLOR_WIN
+		RST18 asc_16DC				; "Загрузка системы CP/M"
+		RST10 "..."
+		di
+		ld	de,0DC8h
+		ld	bc,PROFI_CONF
+		out	(c),e
+		ld	b,7Fh
+		out	(c),d
+		call	READ_SECT_9
+		CP 2
+		JR Z,AUTORUN
+		cp	4
+		jr	nz,NO_DISK
+AUTORUN		ld	sp,TRDOS_AUTORUN
+		ret
+
+NO_DISK:	ld	de,0ACFh
+		ld	bc,PROFI_CONF
+		out	(c),e
+		ld	b,7Fh
+		out	(c),d
+		call	DRAW_MAINMENU			; рисование левого меню
+		ld	de,COPYRIGHT2;1
+		call	PRINT_XORTEXT
+		call	DRAW_LEFT_MENU
+loc_173E:	ld	b,0
+		ld	l,COL_CURS_DRAW;0CFh
+		call	COLOR_CURSOR_L
+		jp	loc_166E
+
+SPECTRUM_MODE:	di
+		call	INST_SPECCY_JMP
+		dec	a
+		add	a,a
+		ld	e,a
+		ld	d,0
+		ld	hl,word_175C
+		add	hl,de
+		ld	sp,hl
+		ld	de,0
+		jp	SET_CONF_PORTS			; запись в порты DFFD,7FFD
+
+DRAW_RIGHT_MENU:ld	bc,0A21h
+		ld	de,101Bh
+		call	INVERS_WINDOW
+		ld	hl,byte_384C
+		call	DRAW_VERT_LINE
+		ld	hl,byte_385D
+		call	DRAW_HORZ_LINE
+		ld	bc,0A22h
+		ld	de,119h
+		call	INVERS_WINDOW
+		ld	bc,1922h
+		ld	de,119h
+		call	INVERS_WINDOW
+		ld	bc,0A21h
+		ld	de,1001h
+		call	INVERS_WINDOW
+		ld	bc,0A3Bh
+		ld	de,1001h
+		call	INVERS_WINDOW
+		RST30 280Bh
+		RST10 "Меню  Тестов"
+		ld	bc,0B22h
+		ld	de,119h
+		call	INVERS_WINDOW
+		ld	hl,byte_3866
+		call	DRAW_HORZ_LINE
+		RST28 byte_37D6
+		ld	de,ADR_SCR_L
+		ld	(ADR_SCR_COL),de
+		ld	hl,byte_361E
+		ld	bc,0C3Bh
+		ld	de,0D01h
+		call	PRINT_COLOR
+		ld	hl,byte_3626
+		ld	bc,1923h
+		ld	de,119h
+		call	PRINT_COLOR
+		ld	de,4000h
+		ld	(ADR_SCR_COL),de
+		ld	l,0CDh
+		ld	bc,0C3Bh
+		ld	de,0E01h
+		call	FILL_COLOR_WIN
+		ld	hl,byte_362E
+		ld	bc,1923h
+		ld	de,118h
+		call	PRINT_COLOR
+		ld	hl,byte_983D
+		ld	(hl),0AAh
+		RST30 240Eh
+		RST10 "Тест  текущей памяти"
+		RST30 240Fh
+		RST10 "Тест  видеовывода"
+		RST30 2410h
+		RST18 asc_34F5				; "Тест  полной палитры"
+		RST30 2411h
+		RST18 asc_350A				; "Тест  XT - клавиатуры"
+		RST30 2412h
+		RST18 asc_253B				; "Тест  AY-3-8910/8912"
+		RST30 2413h
+		RST10 "Тестирование  бипера"
+		RST30 2414h
+		RST18 asc_3520				; "Тест  быстродействия"
+		RST30 2415h
+		RST18 asc_359A				; "Информация об авторе"
+		RST30 2416h
+		RST10 "Выход в основное меню"
+		ret
+
+RIGHT_MENU:	call	DRAW_RIGHT_MENU
+;		ld	bc,0E23h
+;		ld	de,117h
+		LD B,0
+		ld	l,COL_CURS_DRAW;0CFh
+		call	COLOR_CURSOR_R;FILL_COLOR_WIN
+		ld	b,0
+		push	bc
+loc_18CE:	call	WAIT_KEY
+		cp	'8'
+		jp	z,RIGHT_DOWN
+		cp	1Ah
+		jp	z,RIGHT_DOWN
+		cp	'9'
+		jp	z,RIGHT_UP
+		cp	19h
+		jp	z,RIGHT_UP
+		cp	0Dh
+		jp	z,RIGHT_SELECT
+		cp	'0'
+		jp	z,RIGHT_SELECT
+		cp	1Bh
+		jp	z,loc_193B
+		jr	loc_18CE
+
+COLOR_CURSOR_R:	ld	a,0Eh
+		add	a,b
+		ld	b,a
+		ld	c,23h
+		ld	de,117h
+		JP COLOR_CURSOR
+;		PUSH HL
+;		PUSH DE
+;		PUSH BC
+;		CALL INVERS_WINDOW
+;		POP BC
+;		POP DE
+;		POP HL
+;		jp	FILL_COLOR_WIN
+
+RIGHT_DOWN:	pop	bc
+		ld	a,8
+		cp	b
+		jr	z,loc_191B
+		ld	c,b
+		inc	c
+loc_190A:	push	bc
+		ld	l,COL_CURS_DEL;0F8h
+		call	COLOR_CURSOR_R
+		pop	bc
+		ld	b,c
+		push	bc
+		ld	l,COL_CURS_DRAW;0CFh
+		call	COLOR_CURSOR_R
+		jp	loc_18CE
+
+loc_191B:	ld	c,0
+		jr	loc_190A
+
+RIGHT_UP:	pop	bc
+		xor	a
+		cp	b
+		jr	z,loc_1928
+		ld	c,b
+		dec	c
+		jr	loc_190A
+
+loc_1928:	ld	c,8
+		jr	loc_190A
+
+RIGHT_SELECT:	pop	bc
+		ld	a,b
+		add	a,a
+		ld	e,a
+		ld	d,0
+		ld	hl,off_19CF
+		add	hl,de
+		ld	e,(hl)
+		inc	hl
+		ld	d,(hl)
+		ex	de,hl
+		jp	(hl)
+
+loc_193B:	pop	bc
+EXIT2MAIMENU:	ld	de,ADR_SCR_L
+		ld	(ADR_SCR_COL),de
+		ld	l,0FFh
+		ld	bc,0A21h
+		ld	de,101Bh
+		call	FILL_COLOR_WIN
+		ld	de,4000h
+		ld	(ADR_SCR_COL),de
+		ld	l,0C5h
+		ld	bc,0A21h
+		ld	de,101Bh
+		JP	FILL_COLOR_WIN
+
+TEST_PALITRA:	push	bc
+		call	CLS
+		call	TESTER_PAL
+loc_1968:	call	CLS
+		pop	bc
+		push	bc
+		call	REDRAW_MAINMENU
+		jp	loc_18CE
+
+TEST_PCKEYS:	push	bc
+		call	CLS
+		call	TESTER_PCKEYS
+		xor	a
+		ld	(FLAG_PRESS_KEY),a
+		jr	loc_1968
+
+TEST_VIDEO:	push	bc
+		call	CLS
+		call	TESTER_VIDEO
+		jr	loc_1968
+
+TEST_MEMORY:	push	bc
+		call	CLS
+		call	TESTER_MEMORY
+		jr	loc_1968
+
+TEST_AY:	push	bc
+		call	TESTER_AY
+		jr	loc_1968
+
+TEST_BEEP:	push	bc
+		call	TESTER_BEEP
+		pop	hl
+		jr	loc_1968
+
+TEST_SPEED:	push	bc
+		call	TESTER_SPEED
+		jr	loc_1968
+
+INFO_AVTOR:	push	bc
+		call	ABOUT
+		jp	loc_1968
+
+REDRAW_MAINMENU:push	bc
+		call	DRAW_MAINMENU			; рисование левого меню
+		ld	de,COPYRIGHT2;1
+		call	PRINT_XORTEXT
+		call	DRAW_LEFT_MENU
+		ld	b,5
+		ld	l,COL_CURS_DRAW;0CFh
+		call	COLOR_CURSOR_L
+		call	DRAW_RIGHT_MENU
+		pop	bc
+		ld	l,COL_CURS_DRAW;0CFh
+		jp	COLOR_CURSOR_R
+
+TESTER_MEMORY:	ld	de,word_99E5
+		ld	hl,byte_1FFA
+		ld	bc,7
+		ldir
+		ld	de,byte_9CC1
+		ld	hl,byte_9CC0
+		ld	bc,1Fh
+;		ld	(hl),0
+		LD (HL),B
+		ldir
+		RST28 byte_375B
+		RST 0x10
+		db "╔\x18\x18\6\6╦\x18\x18\x18\x18═╗"
+		DB "║\4║   Режим тестирования :\1\3║"
+		DB "║\2  Т Е С Т\1\2║   Тестируемый сегмент:\1\3║"
+		DB "║\4║\1Код  тестирования  :\1\3║"
+		DB "║\2П А М Я Т И\2 ║\1Память проверена\1:\1\3║"
+		DB "║\4║\1Всего  сегментов\1:\1\3║"
+		DB "║\1Micco Software (c)\1║\1Общий объем памяти :\1\3║"
+		DB "╠\x18\x18\6\6╬\x18══╦\x18\x18\6\6═╣"
+		DB "║\4║\3║\4 ║"
+		DB "║ CAS0  CAS1  CAS2  CAS3 ║  ОШИБКИ\1║\1ТАБЛИЦА\1СЕГМЕНТОВ\1║"
+		DB "║\4║\3║\4 ║"
+		DB "║\4╟\x17──╫\x17\x17\5\5─╢\0"
+		ld	b,0Fh
+loc_1B43:	push	bc
+		RST10 "║\4║\3║\4 ║"
+		pop	bc
+		djnz	loc_1B43
+		RST 0x10
+		db "╟\5──┬\5──┬\5──┬\5\5╢\3║\4 ║"
+		DB "║\1  │\1  │\1  │\2║\3║\4 ║"
+		DB "╚\6══╧\6══╧\6══╧\6\6╩\6\6\6══╩\6\6\6\6\6\6\6\6═╝\0"
+loc_1BA0:	RST30 3206h
+		call	sub_200A
+		call	sub_2166
+		call	sub_2AFA
+		push	bc
+		push	hl
+		pop	bc
+		call	PRINT_DEC2TXT
+		RST10 " K "
+		RST30 3205h
+		pop	bc
+		ld	b,0
+		call	PRINT_DEC2TXT
+		call	sub_1F52
+		call	loc_D7F
+		ld	de,byte_9AC0
+		ld	hl,byte_9BC0
+		ld	b,0
+loc_1BD6:	ld	a,(de)
+		and	a
+		jr	nz,loc_1BDC
+		ld	(hl),b
+		inc	hl
+loc_1BDC:	inc	de
+		inc	b
+		ld	a,b
+		cp	40h
+		jr	nz,loc_1BD6
+		ld	(hl),0FFh
+		call	WAIT_KEY
+		cp	1Bh
+		ret	z
+		cp	"P"
+		jr	z,loc_1BA0
+		ld	a,i
+		and	a
+		jp	z,loc_1E31
+loc_1BF5:	di
+		RST30 3201h
+		RST10 "Полный   "
+		ld	de,0FFFFh
+		push	de
+loc_1C0D:	RST30 3204h
+		pop	de
+		inc	de
+		ld	b,d
+		ld	c,e
+		push	de
+		call	PRINT_DEC2TXT
+		RST10 " раз \1"
+		RST30 3203h
+		RST10 "(заполнение)"
+		ld	hl,byte_9BC0
+loc_1C3E:	push	hl
+		ld	a,(hl)
+		cp	0FFh
+		jr	z,loc_1C60
+		call	sub_1CDC
+		call	sub_1CB7
+		push	af
+		xor	a
+		call	sub_1CAD
+		pop	af
+		RST20 0ACFh				; запись в порты DFFD,7FFD				
+		ld	c,a
+		ld	b,0
+		call	sub_D3C
+		pop	hl
+		inc	hl
+		jr	loc_1C3E
+
+loc_1C60:	pop	bc
+		ld	hl,byte_9BC0
+loc_1C64:	push	hl
+		ld	a,(hl)
+		cp	0FFh
+		jr	z,loc_1CA9
+		call	sub_1CB7
+		call	sub_1D2B
+		call	sub_1D8F
+		call	sub_1DC2
+		call	sub_1D5C
+		jr	loc_1C99
+
+loc_1C7B:	push	af
+		RST30 3203h
+		RST10 "(заполнение) "
+loc_1C93:	ld	a,0FFh
+		call	sub_1CAD
+		pop	af
+loc_1C99:	RST20 0ACFh				; запись в порты DFFD,7FFD
+		ld	c,a
+		ld	b,0
+		call	sub_D3C
+		pop	hl
+		inc	hl
+		jr	loc_1C64
+
+loc_1CA9:	pop	bc
+		jp	loc_1C0D
+
+loc_8A2:	xor	a
+		out	(0FEh),a
+		ld	sp,off_8A0
+;		xor	a
+;		jp	sub_1CAD
+sub_1CAD:	
+;		ld	bc,3FFFh
+;		inc	bc
+		ld	hl,4000h
+		LD B,H
+		LD C,L
+		jp	FILL_MEM
+
+sub_1CB7:	push	af
+		RST30 3202h
+		pop	af
+		ld	c,a
+		push	af
+		call	PRINT_HEX2TXT
+		ld	c,"H"
+		RST 8
+		pop	af
+		push	af
+		ld	c,a
+		ld	b,1
+		call	sub_D3C
+		pop	af
+		push	af
+		ld	d,a
+		call	SET4CONF_PORT			; установка значений для портов	DFFD,7FFD
+		RST 0x20				; запись в порты DFFD,7FFD
+		pop	af
+		ret
+
+sub_1CDC:	push	af
+		push	af
+		call	sub_1CFD
+		pop	af
+		pop	af
+		ret
+
+sub_1CE4:	call	EXIT_TESTMEM
+		ret	;???
+
+EXIT_TESTMEM:	ld	bc,0FEh
+		ld	d,a
+		in	a,(c)
+		and	1Fh
+		cp	1Fh
+		ld	a,d
+		ret	z
+		ld	bc,7FFEh
+		in	a,(c)
+		bit	3,a
+		jr	z,loc_1D23
+sub_1CFD:	ld	bc,0F7FEh
+		in	a,(c)
+		rra
+		ld	a,d
+		ret	c
+		ld	b,0FEh
+		in	a,(c)
+		rra
+		jr	c,loc_1D10
+		pop	de
+		jp	loc_1EDA
+
+loc_1D10:	call	RES_STACK
+		pop	de
+		RST20 0ACFh				; запись в порты DFFD,7FFD
+		xor	a
+		ld	i,a
+		call	sub_1F7B
+		jp	loc_1E31
+
+loc_1D23:	ld	a,d
+		pop	de
+		pop	de
+		pop	de
+		pop	de
+		jp	loc_1C7B
+
+sub_1D2B:	push	af
+		RST30 3203h
+		RST10 "(пересечение)"
+		pop	af
+		ld	c,a
+		ld	hl,4000h
+loc_1D48:	xor	a
+		cp	(hl)
+		call	nz,sub_1F01
+		ld	a,c
+		push	af
+		call	sub_1CE4
+		pop	af
+		ld	c,a
+		inc	hl
+		ld	a,h
+		cp	80h
+		jr	nz,loc_1D48
+		ld	a,c
+		ret
+
+sub_1D5C:	push	af
+		RST30 3203h
+		RST10 "(заполнение) "
+		pop	af
+		ld	c,a
+		ld	hl,4000h
+loc_1D79:	ld	a,0FFh
+		ld	(hl),a
+		cp	(hl)
+		call	nz,sub_1F01
+		ld	a,c
+		push	af
+		call	sub_1CE4
+		pop	af
+		ld	c,a
+		inc	hl
+		ld	a,h
+		cp	80h
+		jr	nz,loc_1D79
+		ld	a,c
+		ret
+
+sub_1D8F:	push	af
+		RST30 3203h
+		RST18 asc_3571				; "0AAH & 55H"
+		ld	a,0AAh
+		call	sub_1CAD
+		pop	af
+		ld	c,a
+		ld	hl,4000h
+loc_1DA6:	ld	a,0AAh
+		cp	(hl)
+		call	nz,sub_1F01
+		ld	a,55h
+		ld	(hl),a
+		cp	(hl)
+		call	nz,sub_1F01
+		ld	a,c
+		push	af
+		call	sub_1CE4
+		pop	af
+		ld	c,a
+		inc	hl
+		ld	a,h
+		cp	80h
+		jr	nz,loc_1DA6
+		ld	a,c
+		ret
+
+sub_1DC2:	push	af
+		RST30 3203h
+		RST10 "00H & 0FFH\1"
+		pop	af
+		ld	c,a
+		ld	hl,4000h
+loc_1DDD:	xor	a
+		ld	(hl),a
+		cpl
+		inc	hl
+		ld	(hl),a
+		inc	hl
+		ld	a,c
+		push	af
+		call	sub_1CE4
+		pop	af
+		ld	c,a
+		ld	a,h
+		cp	80h
+		jr	nz,loc_1DDD
+		xor	a
+		call	sub_1E0D
+		ld	hl,4000h
+loc_1DF6:	ld	a,(hl)
+		cpl
+		ld	(hl),a
+		ld	a,c
+		push	af
+		call	sub_1CE4
+		pop	af
+		ld	c,a
+		inc	hl
+		ld	a,h
+loc_1E02:	cp	80h
+		jr	nz,loc_1DF6
+		ld	a,0FFh
+		call	sub_1E0D
+		ld	a,c
+		ret
+
+sub_1E0D:	ld	de,7FFFh
+		ld	hl,4000h
+loc_1E13:	cp	(hl)
+		call	nz,sub_1F01
+		cpl
+		ex	de,hl
+		cp	(hl)
+		call	nz,sub_1F01
+		ex	de,hl
+		ex	af,af'
+		ld	a,c
+		exx
+		call	sub_1CE4
+		exx
+		ld	c,a
+		ex	af,af'
+		inc	hl
+		dec	de
+		ld	b,a
+		ld	a,h
+		cp	60h
+		ld	a,b
+		jr	nz,loc_1E13
+		ret
+
+loc_1E31:	di
+		RST30 3201h
+		RST10 "Усеченный"
+		RST30 3203h
+		RST18 asc_3571				; "0AAH & 55H"
+		ld	de,0FFFFh
+		push	de
+loc_1E55:	RST30 3204h
+		pop	de
+		inc	de
+		ld	b,d
+		ld	c,e
+		push	de
+		call	PRINT_DEC2TXT
+		RST10 " раз    "
+		ld	hl,byte_9BC0
+loc_1E72:	push	hl
+		ld	a,(hl)
+		cp	0FFh
+		jr	z,loc_1E83
+		call	sub_1CB7
+		ld	c,a
+		call	sub_1E86
+		pop	hl
+		inc	hl
+		jr	loc_1E72
+
+loc_1E83:	pop	bc
+		jr	loc_1E55
+
+sub_1E86:	push	bc
+		ld	a,0AAh
+		call	sub_1CAD
+		pop	bc
+loc_1E8D:	ld	hl,4000h
+loc_1E90:	ld	a,0AAh
+		cp	(hl)
+		call	nz,sub_1F01
+		cpl
+		ld	(hl),a
+		cp	(hl)
+		call	nz,sub_1F01
+		ld	(hl),0
+		push	bc
+		call	sub_1EB7
+		pop	bc
+		inc	hl
+		ld	a,h
+		cp	80h
+		jr	nz,loc_1E90
+		push	bc
+loc_1EAA:	RST20 0ACFh				; запись в порты DFFD,7FFD
+		pop	bc
+		ld	b,0
+		JP	sub_D3C
+;		ret
+
+sub_1EB7:	ld	bc,0FEh
+		in	a,(c)
+		and	1Fh
+		cp	1Fh
+		ret	z
+		ld	bc,7FFEh
+		in	a,(c)
+		bit	3,a
+		jr	z,loc_1EF6
+		ld	b,0F7h
+		in	a,(c)
+		bit	1,a
+		jr	z,loc_1EE3
+		rra
+		ret	c
+		ld	b,0FEh
+		in	a,(c)
+		rra
+		ret	c
+loc_1EDA:	call	RES_STACK
+		ld	de,0ACFh
+		jp	SET_CONF_PORTS			; запись в порты DFFD,7FFD
+
+loc_1EE3:	call	RES_STACK
+		RST20 0ACFh				; запись в порты DFFD,7FFD
+		ld	a,1
+		ld	i,a
+		call	sub_1F7B
+		jp	loc_1BF5
+
+loc_1EF6:	pop	de
+		jp	loc_1EAA
+
+RES_STACK:	pop	hl
+		ld	b,5
+loc_1EFD:	pop	de
+		djnz	loc_1EFD
+		jp	(hl)
+
+sub_1F01:	push	de
+		push	hl
+		push	bc
+		push	af
+		push	hl
+		ld	hl,byte_9AC0
+		ld	e,c
+		ld	d,0
+		add	hl,de
+		ld	(hl),3
+		pop	hl
+		ld	b,a
+		ld	a,(hl)
+		push	bc
+		push	af
+		ld	c,b
+		ld	b,a
+		call	loc_C22
+		pop	af
+		pop	bc
+		xor	b
+		ld	d,c
+		push	bc
+		call	sub_2141
+		pop	bc
+		ld	a,(byte_99F2)
+		and	a
+		ld	a,c
+		jr	nz,loc_1F2F
+		and	0Ch
+		xor	4
+		jr	loc_1F33
+
+loc_1F2F:	and	30h
+		rrca
+		rrca
+loc_1F33:	rrca
+		rrca
+		push	af
+		call	sub_DEB
+		push	bc
+		RST20 0ACFh				; запись в порты DFFD,7FFD
+		pop	bc
+		pop	af
+		ld	e,a
+		call	sub_DFD
+		ld	de,(word_99E9)
+		RST 0x20				; запись в порты DFFD,7FFD
+		pop	af
+		pop	bc
+		pop	hl
+		pop	de
+		ret
+
+sub_1F52:	ld	a,5
+		ld	(byte_9AC6),a
+		ld	a,(byte_9AFA)
+		and	a
+		jr	z,loc_1F6A
+		ld	a,(byte_9AF2)
+		and	a
+		jr	z,loc_1F76
+		ld	a,0FFh
+		ld	(byte_99EB),a
+		jr	sub_1F7B
+
+loc_1F6A:	ld	a,5
+		ld	(byte_9AFA),a
+		ld	a,3Ah
+		ld	(byte_99EB),a
+		jr	sub_1F7B
+
+loc_1F76:	ld	a,5
+		ld	(byte_9AF2),a
+sub_1F7B:	ld	hl,byte_9AC0
+		ld	b,0
+loc_1F80:	push	bc
+		push	hl
+		ld	a,b
+		ld	c,a
+		and	7
+		ld	b,a
+		add	a,a
+		add	a,b
+		add	a,27h
+		ld	b,a
+		ld	a,c
+		srl	a
+		srl	a
+		srl	a
+		add	a,a
+		add	a,0Dh
+		ld	c,a
+		RST 0x30
+		pop	hl
+		pop	bc
+		push	hl
+		push	bc
+		ld	a,(hl)
+		and	a
+		ld	l,6
+		jr	z,loc_1FB2
+		ld	l,0C2h
+		cp	3
+		jr	z,loc_1FB2
+		cp	5
+		jr	nz,loc_1FC7
+		ld	l,0C5h
+		jr	loc_1FB2
+
+loc_1FB2:	push	bc
+		ld	bc,(Y_COORD)
+		ld	a,b
+		ld	b,c
+		ld	c,a
+		ld	de,102h
+		call	FILL_COLOR_WIN
+		pop	bc
+		ld	c,b
+		call	PRINT_HEX2TXT
+		jr	loc_1FD1
+
+loc_1FC7:	ld	c,"-"
+		RST 8
+		ld	c,"-"
+		RST 8
+loc_1FD1:	pop	bc
+		pop	hl
+		inc	hl
+		inc	b
+		ld	a,b
+		cp	40h
+		jp	nz,loc_1F80
+		ld	a,(byte_99F2)
+		and	a
+		ret	nz
+		ld	de,8000h
+		ld	(ADR_SCR_COL),de
+		ld	l,0
+		ld	bc,1127h
+		ld	de,0B17h
+		call	FILL_COLOR_WIN
+		ld	de,4000h
+		ld	(ADR_SCR_COL),de
+		ret
+
+sub_2001:	push	bc
+		push	hl
+		call	VERIFY_MEM
+		pop	hl
+		pop	bc
+		and	a
+		ret
+
+sub_200A:	ld	hl,byte_9AC0
+		ld	a,0FFh
+		ld	bc,40h
+		call	FILL_MEM
+		ld	hl,byte_9DC0
+		xor	a
+		ld	bc,20h
+		call	FILL_MEM
+loc_201F:	ld	de,0CCAh
+		ld	bc,0CC8h
+		ld	hl,4000h
+		call	sub_2001
+		jr	nz,loc_203B
+		ld	de,0CCCh
+		call	sub_2001
+		jr	nz,loc_203B
+		ld	de,0CCEh
+		call	VERIFY_MEM
+loc_203B:	ld	(byte_99F2),a
+		ld	a,(PIX_SCR)
+		ex	af,af'
+		ld	h,0
+		ld	bc,byte_9AC0
+		ld	de,byte_9BC0
+loc_204A:	push	de
+		push	bc
+		ld	d,h
+		call	SET4CONF_PORT			; установка значений для портов	DFFD,7FFD
+		RST 0x20				; запись в порты DFFD,7FFD
+		pop	bc
+		pop	de
+		ld	a,(COL_SCR)
+		ld	(de),a
+		xor	a
+		ld	(COL_SCR),a
+		ld	a,(COL_SCR)
+		and	a
+		jr	z,loc_206E
+		push	de
+		push	bc
+		ld	d,h
+		call	sub_2141
+		ld	h,d
+		pop	bc
+		pop	de
+		jr	loc_206F
+
+loc_206E:	ld	(bc),a
+loc_206F:	inc	de
+		inc	bc
+		inc	h
+		ld	a,h
+		cp	40h
+		jr	nz,loc_204A
+		ld	de,6
+		call	sub_20F5
+		ld	e,0
+		ld	hl,byte_9AC0
+loc_2082:	push	hl
+		push	de
+		ld	a,(hl)
+		and	a
+		jr	nz,loc_208D
+		ld	d,0
+		call	sub_20F5
+loc_208D:	pop	de
+		pop	hl
+		inc	hl
+		inc	e
+		ld	a,e
+		cp	40h
+
+loc_2094:
+		jr	nz,loc_2082
+		ld	h,0
+		ld	bc,byte_9AC0
+		ld	de,byte_9BC0
+loc_209E:	ld	a,(bc)
+		and	a
+		jr	nz,loc_20B1
+		push	de
+		push	bc
+		ld	d,h
+		call	SET4CONF_PORT			; установка значений для портов	DFFD,7FFD
+		RST 0x20				; запись в порты DFFD,7FFD
+		pop	bc
+		pop	de
+		ld	a,(de)
+		ld	(COL_SCR),a
+loc_20B1:	inc	de
+		inc	bc
+		inc	h
+		ld	a,h
+		cp	40h
+sub_20B7:	jr	nz,loc_209E
+		ex	af,af'
+		ld	(PIX_SCR),a
+sub_20BD:	RST20 0ACFh				; запись в порты DFFD,7FFD
+		ld	hl,byte_9DC0
+		ld	c,4
+loc_20C8:	ld	b,8
+		ld	d,0
+loc_20CC:	ld	a,3
+		cp	(hl)
+		jr	nz,loc_20D2
+		inc	d
+loc_20D2:	inc	hl
+		djnz	loc_20CC
+		ld	a,d
+		cp	8
+		jr	nz,loc_20E9
+		push	bc
+		ld	bc,8
+;		scf
+;		ccf
+		AND A
+		sbc	hl,bc
+		ld	b,c
+loc_20E3:	ld	(hl),0FFh
+		inc	hl
+		djnz	loc_20E3
+		pop	bc
+loc_20E9:	dec	c
+		jr	nz,loc_20C8
+		ret
+
+FILL_MEM:	push	hl
+		pop	de
+		inc	de
+		dec	bc
+		ld	(hl),a
+		ldir
+		ret
+
+sub_20F5:	push	de
+		ld	d,e
+		call	SET4CONF_PORT			; установка значений для портов	DFFD,7FFD
+		RST 0x20				; запись в порты DFFD,7FFD
+		pop	de
+		ld	a,0FFh
+		ld	(COL_SCR),a
+		ld	b,40h
+loc_2105:	push	bc
+		ld	a,d
+		cp	e
+		jr	z,loc_212C
+		ld	c,d
+		ld	b,0
+		ld	hl,byte_9AC0
+		add	hl,bc
+		ld	a,(hl)
+		and	a
+		jr	nz,loc_212C
+		push	de
+		call	SET4CONF_PORT			; установка значений для портов	DFFD,7FFD
+		RST 0x20				; запись в порты DFFD,7FFD
+		pop	de
+		ld	a,(COL_SCR)
+		and	a
+		jr	z,loc_212C
+		push	hl
+		ld	c,0
+		call	sub_213C
+		pop	hl
+		ld	(hl),0FFh
+loc_212C:	inc	d
+		pop	bc
+		djnz	loc_2105
+		ld	d,e
+		call	SET4CONF_PORT			; установка значений для портов	DFFD,7FFD
+		RST 0x20				; запись в порты DFFD,7FFD
+		xor	a
+		ld	(COL_SCR),a
+		ret
+
+sub_213C:	xor	c
+		ret	z
+		cp	0FFh
+		ret	z
+sub_2141:	push	af
+		ld	a,(byte_99F2)
+		and	a
+		ld	a,d
+		jr	z,loc_214E
+		and	30h
+		rrca
+		jr	loc_2153
+
+loc_214E:	and	0Ch
+		xor	4
+		rlca
+loc_2153:	ld	c,a
+		ld	b,0
+		ld	hl,byte_9DC0
+		add	hl,bc
+		pop	af
+		ld	b,8
+loc_215D:	rlca
+		jr	nc,loc_2162
+		ld	(hl),3
+loc_2162:	inc	hl
+		djnz	loc_215D
+		ret
+
+sub_2166:	ld	e,0
+loc_2168:	push	de
+		call	sub_2173
+		pop	de
+		inc	e
+		bit	2,e
+		jr	z,loc_2168
+		ret
+
+sub_2173:	ld	a,(byte_99F2)
+		and	a
+		jp	z,loc_21F0
+		push	de
+		ld	d,0
+		rlc	e
+		rlc	e
+		rlc	e
+		rlc	e
+		ld	hl,byte_9AC0
+		add	hl,de
+		ld	c,d
+		ld	b,d
+		ld	de,byte_225E
+loc_218E:	ld	a,(de)
+		cp	55h
+		jr	z,loc_21A3
+		push	de
+		ld	d,(hl)
+		cp	d
+		jr	nz,loc_2199
+		inc	b
+loc_2199:	ld	a,d
+		and	a
+		jr	nz,loc_219E
+		inc	c
+loc_219E:	pop	de
+		inc	hl
+		inc	de
+		jr	loc_218E
+
+loc_21A3:	pop	de
+		ld	a,c
+		and	a
+		jr	z,loc_21DE
+		cp	10h
+		jr	z,loc_21E2
+		ld	a,b
+		cp	10h
+		jr	z,loc_21EC
+		push	de
+		ld	d,0
+		rlc	e
+		rlc	e
+		rlc	e
+		rlc	e
+		ld	hl,byte_9AC0
+		add	hl,de
+		ld	b,d
+		ld	de,byte_226F
+loc_21C4:	ld	a,(de)
+		cp	55h
+		jr	z,loc_21D4
+		push	de
+		ld	d,(hl)
+		cp	d
+		jr	nz,loc_21CF
+		inc	b
+loc_21CF:	pop	de
+		inc	hl
+		inc	de
+		jr	loc_21C4
+
+loc_21D4:	pop	de
+		ld	a,b
+		cp	10h
+		jr	z,loc_21EC
+		ld	a,"?"
+		jr	loc_21E4
+
+loc_21DE:	ld	a,"-"
+		jr	loc_21E4
+
+loc_21E2:	ld	a,"7"
+loc_21E4:	ld	d,0
+loc_21E6:	ld	hl,byte_99EE
+		add	hl,de
+		ld	(hl),a
+		ret
+
+loc_21EC:	ld	a,"5"
+		jr	loc_21E4
+
+loc_21F0:	ld	d,a
+		ld	a,e
+		xor	1
+		ld	e,a
+		push	de
+		rlca
+		rlca
+		ld	e,a
+		ld	hl,byte_9AC0
+		add	hl,de
+		ld	b,4
+		ld	c,d
+loc_2200:	ld	a,(hl)
+		and	a
+		jr	nz,loc_2205
+		inc	c
+loc_2205:	inc	hl
+		djnz	loc_2200
+		ld	a,c
+		ld	c,"-"
+		and	a
+		jr	z,loc_2216
+		ld	c,"5"
+		cp	4
+		jr	z,loc_2216
+		ld	c,"?"
+loc_2216:	pop	de
+		ld	a,c
+		jp	loc_21E6
+
+TESTER_BEEP:	call	sub_273D
+		RST30 1A0Eh
+		RST10 "Тест  бипера"
+		ld	bc,0E14h
+		ld	de,118h
+		call	INVERS_WINDOW
+		ld	hl,byte_38FA
+		call	DRAW_VERT_LINE
+		ld	hl,byte_390B
+		call	DRAW_HORZ_LINE
+		RST28 byte_38C0
+		RST30 1510h
+		RST10 "В данный момент звучит"
+		RST30 1712h
+		RST10 "сигнал  бипера !!!"
+		RST30 1A14h
+		RST10 "Выход : \"Esc\""
+		pop	ix
+		push	ix
+		pop	iy
+loc_23DD:	ld	hl,2BCh
+		exx
+		ld	hl,5DC0h
+		ld	e,0BFh
+		exx
+		call	sub_230A
+		jr	loc_23DD
+
+ABOUT:		call	sub_273D
+		RST30 160Ch
+		RST18 asc_359A				; "Информация об авторе"
+		ld	bc,0C14h
+		ld	de,118h
+		call	INVERS_WINDOW
+		ld	hl,byte_3924
+		call	DRAW_VERT_LINE
+		ld	hl,byte_393D
+		call	DRAW_HORZ_LINE
+		RST28 byte_38D5
+		RST30 150Eh
+		RST 0x10
+;		DB "Версия 2.0\1 17.04.94",0
+		DB "Версия ",ROM_VERS," "
+		TEXTDATE
+		DB 0
+		RST30 150Fh
+		RST10 "Автор: М.Б. Познянский"
+		RST30 1510h
+		RST10 " Єє (095) 365-09-83(д)"
+		RST30 1511h
+		RST10 " Єє (095) 300-15-51(р)"
+;		ld	hl,byte_902B
+;		ld	(hl),0
+;		set	5,h
+;		ld	(hl),0
+		RST30 1513h
+		RST10 "Выражаю  благодарность"
+		RST30 1514h
+		RST10 " за оказанную помощь:"
+		RST30 1515h
+		RST10 "М.Хохлову ,В.Курилову"
+		RST30 1516h
+		RST10 "А.Крестьяникову (KiiA)"
+		RST30 1617h
+		RST10 "А.Емельянову\1(AvE)"
+		JP	WAIT_KEY
+
+TESTER_AY:	call	sub_273D
+		RST30 160Eh
+		RST18 asc_253B				; "Тест  AY-3-8910/8912"
+		ld	bc,0E14h
+		ld	de,118h
+		call	INVERS_WINDOW
+		ld	hl,byte_3956
+		call	DRAW_VERT_LINE
+		ld	hl,byte_3967
+		call	DRAW_HORZ_LINE
+		RST28 byte_38EA
+		RST30 1511h
+		ld	bc,0C55h
+		call	WRITE2AY
+		ld	b,0FFh
+		in	a,(c)
+		cp	55h
+		jr	z,loc_25C4
+		RST10 "\2Микросхема"
+		RST30 1913h
+		RST10 "отсутствует !!!"
+		ld	l,0FAh
+		ld	bc,1115h
+		ld	de,316h
+		call	FILL_COLOR_WIN
+		jp	loc_26BB
+
+loc_25C4:	RST10 "Канал  A - тестируется"
+		RST30 1512h
+		RST10 "Канал  B -"
+		RST30 1513h
+		RST10 "Канал  C -"
+		RST30 1515h
+		RST10 "Звуковой эффект -"
+		ld	hl,byte_2705
+		call	WR_DUMP2AY
+		call	sub_2746
+		RST30 2011h
+		RST18 asc_3589				; "  проверен "
+		RST30 2012h
+		RST18 asc_357D				; "тестируется"
+		ld	hl,byte_2713
+		call	WR_DUMP2AY
+		call	sub_2746
+		RST30 2012h
+		RST18 asc_3589				; "  проверен "
+		RST30 2013h
+		RST18 asc_357D				; "тестируется"
+		ld	hl,byte_2721
+		call	WR_DUMP2AY
+		call	sub_2746
+		RST30 2013h
+		RST18 asc_3589				; "  проверен "
+		RST30 2715h
+		RST18 asc_3595				; "wait"
+		ld	hl,byte_272F
+		call	WR_DUMP2AY
+		ld	bc,32h
+loc_268D:	push	bc
+		call	WRITE2AY
+		pop	bc
+		ei
+		halt
+		inc	c
+		inc	c
+		ld	a,0CAh
+		cp	c
+		jr	nz,loc_268D
+		ld	bc,0C64h
+		call	WRITE2AY
+		ld	bc,0D09h
+		call	WRITE2AY
+		ld	bc,79Fh
+		call	WRITE2AY
+		RST30 2715h
+		RST10 " Ok "
+loc_26BB:	call	WAIT_KEY
+		cp	1Bh
+		ret	z
+		cp	"8"
+		jr	nz,loc_26BB
+		ret
+
+WR_DUMP2AY:	ld	b,0
+loc_26C8:	ld	c,(hl)
+		push	hl
+		push	bc
+		call	WRITE2AY
+		pop	bc
+		pop	hl
+		inc	hl
+		inc	b
+		ld	a,b
+		cp	0Eh
+		jr	nz,loc_26C8
+		ret
+
+sub_26D8:	ld	bc,0E00h
+loc_26DB:	push	bc
+		dec	b
+		call	WRITE2AY
+		pop	bc
+		djnz	loc_26DB
+WRITE2AY:	push	bc
+		pop	de
+		ld	bc,0FFFDh
+		out	(c),d
+		ld	b,0BFh
+		out	(c),e
+		ret
+
+sub_26EF:	call	sub_59C
+		cp	0FFh
+		ret	z
+		call	WAIT_KEY
+		cp	"8"
+		jr	z,loc_26FF
+		cp	1Bh
+		ret	nz
+loc_26FF:	call	sub_26D8
+		pop	de
+		pop	de
+		ret
+
+sub_273D:	call	DRAW_MAINMENU			; рисование левого меню
+		ld	de,COPYRIGHT2
+		jp	PRINT_XORTEXT
+
+sub_2746:	ld	b,0FAh
+loc_2748:	ei
+		halt
+		call	sub_26EF
+		djnz	loc_2748
+		ret
+
+TESTER_SPEED:	di
+		ld	a,0FFh
+		ld	(byte_99ED),a
+		ld	(Y_COORD_COL),a
+		call	sub_273D
+		RST30 160Ch
+		RST18 asc_3520				; "Тест  быстродействия"
+		ld	bc,0C01h
+		ld	de,13Eh
+		call	INVERS_WINDOW
+		ld	hl,byte_3789
+		call	DRAW_VERT_LINE
+		RST28 byte_3741
+		RST30 212h
+		ld	c,"▀"
+		RST 8
+		ld	b,6
+loc_278A:	push	bc
+		RST10 "▀▀▀▐ё▀▀▀▐▄"
+		pop	bc
+		djnz	loc_278A
+		ld	hl,byte_379A
+		call	DRAW_HORZ_LINE
+		RST30 213h
+		RST18 asc_283D				; "0"
+		RST30 210h
+		ld	a,14h
+		call	sub_280B
+loc_27B9:	push	hl
+		ld	ix,loc_27DE
+		ld	iy,loc_27C9
+		ld	d,0
+		ld	c,0
+		ei
+		inc	b
+		halt
+loc_27C9:	ld	iy,loc_27D0
+		ei
+		dec	b
+		halt
+loc_27D0:	inc	c
+		ex	(sp),hl
+		ex	(sp),hl
+		ei
+;		nop	;???
+loc_27D5:	ld	b,3Ah
+loc_27D7:	ex	(sp),hl
+		ex	(sp),hl
+		djnz	loc_27D7
+		inc	d
+		jr	loc_27D5
+
+loc_27DE:	pop	hl
+		ld	a,(Y_COORD_COL)
+		cp	d
+		jr	z,loc_27FA
+		ld	a,d
+		ld	(Y_COORD_COL),a
+		push	af
+		call	sub_2852
+		RST30 211h
+		call	sub_282A
+		pop	af
+		call	sub_280B
+loc_27FA:	ld	bc,0FEh
+		in	a,(c)
+		and	1Fh
+		cp	1Fh
+		jp	z,loc_27B9
+		xor	a
+		ld	(byte_99ED),a
+		ret
+
+sub_280B:	cp	79h
+		jr	nc,loc_2823
+		srl	a
+		ld	b,a
+		ld	a,0DDh
+loc_2814:	push	af
+		ld	c,'█'
+loc_2817:	push	bc
+		RST 8
+		pop	bc
+		djnz	loc_2817
+		pop	af
+		ret	nc
+		jp	loc_B2
+
+loc_2823:	ld	a,3Eh
+		ld	b,3Ch
+		scf
+		jr	loc_2814
+
+sub_282A:	ld	bc,(Y_COORD)
+		push	bc
+		RST10 "\4\4\3 "
+loc_2837:	pop	bc
+		RST 0x30
+		ret
+
+sub_2852:	RST30 20Eh
+		xor	a
+		srl	d
+		jr	nc,loc_285F
+		ld	a,5
+loc_285F:	push	af
+		ld	c,0
+		ld	a,d
+		cp	0Ah
+		jr	c,loc_286E
+loc_2867:	sub	0Ah
+		inc	c
+		cp	0Ah
+		jr	nc,loc_2867
+loc_286E:	push	af
+		ld	a,c
+		call	sub_2B88
+		ld	c,"."
+		RST 8
+		pop	af
+		call	sub_2B88
+		pop	af
+		jp	sub_2B88
+
+; заливка цветовых зон
+COLOR2SCR:	ld	a,(hl)
+		and	a
+		ret	z
+		inc	hl
+		ld	b,(hl)
+		inc	hl
+		ld	c,(hl)
+		inc	hl
+		ld	d,(hl)
+		inc	hl
+		ld	e,(hl)
+		inc	hl
+		push	hl
+		ld	l,a
+		call	FILL_COLOR_WIN
+		pop	hl
+		jr	COLOR2SCR			; заливка цветовых зон
+
+DRAW_VERT_LINE:	xor	a
+		jr	loc_2898
+
+DRAW_HORZ_LINE:	ld	a,h
+loc_2898:	ld	e,a
+		ld	a,(hl)
+		and	a
+		ret	z
+		ld	c,a
+		ld	a,e
+		inc	hl
+		ld	b,(hl)
+		inc	hl
+		ld	d,(hl)
+		inc	hl
+		ld	e,(hl)
+		inc	hl
+		push	hl
+		push	af
+		and	a
+		jr	z,loc_28B1
+		call	VERTIC_LINE
+loc_28AD:	pop	af
+		pop	hl
+		jr	loc_2898
+
+loc_28B1:	call	HORIZ_LINE
+		jr	loc_28AD
+
+CONT_SERVICE:	ld	bc,7FFDh
+		ld	a,6
+		out	(c),a
+		ld	hl,0C000h
+		push	hl
+		ld	bc,4000h
+		ld	a,0AAh
+		call	FILL_MEM
+		pop	hl
+		ld	bc,4000h
+		ld	d,0AAh
+loc_293E:	ld	a,d
+		cp	(hl)
+		jp	nz,loc_22DC
+		cpl
+		ld	(hl),a
+		cp	(hl)
+		jp	nz,loc_22DC
+		ld	(hl),0
+		inc	hl
+		dec	bc
+		xor	a
+		cp	b
+		jr	nz,loc_293E
+		cp	c
+		jr	nz,loc_293E
+		RST20 207h				; запись в порты DFFD,7FFD
+loc_295A:	ld	sp,byte_FFFE
+		ld	hl,4747h
+		ld	bc,1000h
+loc_2963:	push	hl
+		push	hl
+		dec	bc
+		xor	a
+		cp	b
+		jr	nz,loc_2963
+		cp	c
+		jr	nz,loc_2963
+		ld	de,0ACFh
+		ld	bc,0DFFDh
+		out	(c),e
+		ld	b,7Fh
+		out	(c),d
+		ld	a,7
+		out	(0FEh),a
+		ld	sp,WORK_STACK
+loc_2980:	call	sub_2ADC
+		call	sub_273D
+loc_2986:	RST28 byte_3DEF
+		RST30 120Eh
+		RST10 "┌─ ROM Bios \5\5\5\5\5┐"
+		RST30 120Fh
+		RST18 unk_3618
+		RST30 1210h
+		RST18 unk_3618
+		RST30 1211h
+		RST10 "│ Полный обьем ОЗУ -\2 │"
+		RST30 1212h
+		RST18 unk_3618
+		RST30 1213h
+		RST10 "│ Полный обьем ПЗУ -  64K  │"
+		RST30 1214h
+		RST18 unk_3618
+		RST30 1215h
+		RST10 "└\5\5\5\5\5\5\5\5──┘"
+		RST30 2711h
+		call	sub_200A
+		call	sub_2AFA
+		push	hl
+		pop	bc
+		call	PRINT_DEC2TXT
+		ld	c,"K"
+		RST 8
+		ld	bc,0E12h
+		ld	de,81Ch
+		call	INVERS_WINDOW
+		ld	l,0F9h
+		ld	bc,0E12h
+		ld	de,81Ch
+		call	FILL_COLOR_WIN
+;		ld	bc,0FEFEh
+;		in	a,(c)
+;		rra
+;		jr	c,loc_2A6E
+
+;loc_2A67:
+;		in	a,(c)
+;		rra
+;		jr	nc,loc_2A67
+	IF OFF_AUTOSTART=1
+		LD B,50
+LOC_PAUSE	EI
+		HALT
+		EI
+		HALT
+		DI
+		DJNZ LOC_PAUSE
+	ELSE
+		LD	BC,0FEFEH
+		IN	A,(C)
+		RRA
+		JR	C,loc_2A6E
+LOC_2A67	IN	A,(C)
+		RRA
+		JR	NC,LOC_2A67
+	ENDIF
+		jr	JMP2MAINMENU			; выход	в главное меню
+
+loc_2A6E:	RST30 191Ah
+		RST10 "Please wait ..."
+		RST20 0DC8h				; запись в порты DFFD,7FFD
+		call	READ_SECT_9
+		cp	0FFh
+		jr	z,JMP2MAINMENU			; диска	нет
+		cp	4
+		jr	z,JUMP2BOOTSEC			; размер сектора 4 -> запуск бутсектора
+		CP 2
+		JR Z,JUMP2BOOTSEC			; размер сектора 2 -> запуск бутсектора
+		cp	1
+		jr	nz,JMP2MAINMENU			; выход в главное меню
+		call	INST_SPECCY_JMP			; размер сектора 1 -> сброс в тырдос
+		call	sub_892
+		di
+		ld	sp,word_175E
+		ld	de,0
+		jp	SET_CONF_PORTS			; запись в порты DFFD,7FFD
+
+JUMP2BOOTSEC:	ld	sp,TRDOS_AUTORUN
+		ret
+
+; выход	в главное меню
+JMP2MAINMENU:	RST20 0ACFh				; запись в порты DFFD,7FFD
+		ld	l,0
+		ld	bc,0D12h
+		ld	de,0F1Ch
+		call	FILL_COLOR_WIN
+		ld	de,8000h
+		ld	(ADR_SCR_COL),de
+		ld	l,e
+		ld	bc,0D12h
+		ld	de,0F1Ch
+		call	FILL_COLOR_WIN
+		ld	de,4000h
+		ld	(ADR_SCR_COL),de
+		jp	loc_165D
+
+sub_2ADC:	ld	hl,FLAG_PRESS_KEY
+		ld	bc,11h
+		xor	a
+		call	FILL_MEM
+		ld	de,4000h
+		ld	(ADR_SCR_COL),de
+		rlc	d
+		ld	(ADR_SCR_PIX),de
+		xor	a
+		ld	i,a
+		ld	(byte_99ED),a
+		ret
+
+sub_2AFA:	ld	de,byte_9AC0
+		ld	bc,4000h
+		ld	h,c
+		ld	l,c
+loc_2B02:	ld	a,(de)
+		inc	de
+		and	a
+		jr	nz,loc_2B0E
+		push	bc
+		ld	bc,10h
+		add	hl,bc
+		pop	bc
+		inc	c
+loc_2B0E:	djnz	loc_2B02
+		ret
+
+PRINT_DEC2TXT:	push	bc
+		push	bc
+		pop	hl
+		ld	bc,10000
+		or	a
+		sbc	hl,bc
+		call	sub_2B38
+		ld	bc,1000
+		pop	hl
+		push	hl
+		or	a
+		sbc	hl,bc
+		call	sub_2B38
+		ld	bc,100
+		pop	hl
+		push	hl
+		or	a
+		sbc	hl,bc
+		call	sub_2B38
+		pop	hl
+		ld	a,l
+		jp	loc_2B5B
+
+sub_2B38:	jr	c,loc_2B50
+		xor	a
+		push	hl
+loc_2B3C:	pop	de
+		inc	a
+		push	hl
+		sbc	hl,bc
+		jr	nc,loc_2B3C
+		call	sub_2B88
+		pop	de
+		pop	hl
+		pop	bc
+		push	de
+		ld	a,1
+		ld	(byte_99D2),a
+		jp	(hl)
+
+loc_2B50:	ld	a,(byte_99D2)
+		and	a
+		ret	z
+		ld	c,"0"
+		RST 8
+		ret
+
+loc_2B5B:	or	a
+		jr	z,loc_2B64
+		ld	b,a
+		xor	a
+loc_2B60:	inc	a
+		daa
+		djnz	loc_2B60
+loc_2B64:	ld	b,a
+		rrca
+		rrca
+		rrca
+		rrca
+		and	0Fh
+		jr	nz,loc_2B7C
+		ld	a,(byte_99D2)
+		and	a
+		jr	z,loc_2B7F
+		push	bc
+		ld	c,"0"
+		RST 8
+		pop	bc
+		jr	loc_2B7F
+
+loc_2B7C:	call	sub_2B88
+loc_2B7F:	ld	a,b
+		and	0Fh
+		push	af
+		xor	a
+		ld	(byte_99D2),a
+		pop	af
+sub_2B88:	add	a,"0"
+		ld	c,a
+		push	bc
+		RST 8
+		pop	bc
+		ret
+
+; установка значений для портов	DFFD,7FFD
+SET4CONF_PORT:	ld	a,d
+		rrca
+		rrca
+		rrca
+		and	7
+		or	0C8h
+		ld	e,a
+		ld	a,d
+		and	7
+		or	8
+		ld	d,a
+		ld	(word_99E9),de
+		ret
+
+sub_2BA5:	ld	a,b
+		srl	a
+		srl	a
+		srl	a
+		srl	a
+		push	bc
+		call	sub_2BCC
+		pop	bc
+		ld	a,b
+		and	0Fh
+		push	bc
+		call	sub_2BCC
+		pop	bc
+PRINT_HEX2TXT:	ld	a,c
+		srl	a
+		srl	a
+		srl	a
+		srl	a
+		push	bc
+		call	sub_2BCC
+		pop	bc
+		ld	a,c
+		and	0Fh
+sub_2BCC:	cp	0Ah
+		jr	c,loc_2BD4
+		add	a,"7"
+		jr	loc_2BD6
+
+loc_2BD4:	add	a,"0"
+loc_2BD6:	ld	c,a
+		RST 8
+		ret
+
+; запись в порты DFFD,7FFD
+SET_CONF_PORTS:	ld	bc,PROFI_CONF
+		out	(c),e
+		ld	b,7Fh
+		out	(c),d
+		ret
+
+INST_SPECCY_JMP:RST20 8C8h				; запись в порты DFFD,7FFD
+		ld	de,COL_SCR
+		ld	hl,BASIC_48
+		ld	bc,24h
+		ldir
+		RST20 0ACFh				; запись в порты DFFD,7FFD
+		RET
+
+BASIC_48:	ld	d,30h
+loc_3E01:	ld	bc,7FFDh
+		out	(c),d
+		jp	0
+
+BASIC_128:	ld	d,0
+		jr	loc_3E01
+
+TRDOS_48:	ld	d,30h
+
+loc_3E0F:	ld	bc,7FFDh
+		out	(c),d
+		ld	sp,byte_D000
+		ld	hl,0
+		push	hl
+		jp	0x3D2E
+
+TRDOS_128:	ld	d,10h
+		jr	loc_3E0F
+EBASIC_48
+
+START:		IM 1
+		ld	sp,off_34D
+		ld	bc,PROFI_CONF
+		ld	a,80h
+		out	(c),a
+		ld	hl,BYTES4PALITRA
+		jp	SET_PALITRA
+
+loc_344:	ld	bc,PROFI_CONF
+		xor	a
+		out	(c),a
+;		jp	loc_5
+
+;loc_5:
+;		xor	a
+		out	(0FEh),a
+		ld	bc,PROFI_CONF
+		out	(c),a
+		ld	b,7Fh
+		ld	a,4
+		out	(c),a
+;		ld	de,5AFEh
+;		ld	hl,5AFFh
+;		ld	bc,2FFh
+;		ld	(hl),0
+;		lddr
+		LD HL,0X5800
+		LD DE,0X5801
+		LD BC,0X2FF
+		LD (HL),L
+		LDIR
+sub_20:		ld	ix,0
+		ld	hl,4000h
+		ld	bc,1800h
+		ld	d,0AAh
+loc_2C:		ld	a,d
+		ld	(hl),a
+		cp	(hl)
+		jp	nz,loc_2280
+		cpl
+		ld	(hl),a
+		cp	(hl)
+;		jp	loc_28DE
+
+;loc_28DE:
+		jp	nz,loc_2280
+		ld	(hl),0
+		inc	hl
+		dec	bc
+		xor	a
+		cp	b
+;		jp	nz,loc_2C
+		JR NZ,loc_2C
+		cp	c
+;		jp	nz,loc_2C
+		JR NZ,loc_2C
+		ld	sp,byte_7FFE
+		ld	bc,0FEh
+		in	a,(c)
+		and	1Fh
+		cp	1Fh
+		jr	z,loc_290B
+		ld	b,0EFh
+		in	a,(c)
+		bit	2,a
+		jp	nz,TESTKEYS
+		xor	a
+		ld	r,a
+		jp	loc_8A2
+
+loc_290B:	call	sub_71F
+		and	a
+		JP	NZ,CONT_SERVICE
+		ld	de,0				; верхняя память не найдена,сброс в басик128
+		RST 0x20				; запись в порты DFFD,7FFD
+		ld	de,0C000h
+		ld	hl,BASIC_48
+		ld	bc,EBASIC_48-BASIC_48+1;24h
+		ldir
+		JP 0XC000+BASIC_128-BASIC_48
+
+loc_2280:	ld	a,0FFh
+		ld	r,a
+		di
+		ld	ix,loc_8A2
+		ld	iy,loc_2280
+		ld	hl,258h
+		exx
+		ld	hl,7D00h
+		ld	e,0CFh
+		exx
+		ld	sp,off_229C
+		jr	sub_230A
+
+loc_229E:	di
+		ld	ix,0
+		ld	iy,0
+		ld	hl,190h
+		exx
+		ld	hl,55F0h
+		ld	e,0B0h
+		exx
+		ld	sp,off_22B6
+		jr	sub_230A
+
+loc_22B8:	xor	(hl)
+		push	af
+		call	sub_22CC
+		ld	hl,asc_35AF			; "Цветной сегмент !!!"
+		call	PRINT_SYM_SPACE
+		RST30 101h
+		pop	af
+		jr	loc_22E5
+
+sub_22CC:	ld	de,4000h
+		ld	(ADR_SCR_PIX),de
+		xor	a
+		out	(0FEh),a
+		RST30 100h
+		RET
+
+loc_22DC:	xor	(hl)
+		ld	sp,byte_7FFD
+		push	af
+		call	sub_22CC
+		pop	af
+loc_22E5:	ld	b,8
+loc_22E7:	rlca
+		push	bc
+		push	af
+		ld	c,"0"
+		jr	nc,loc_22EF
+		inc	c
+loc_22EF:	RST 8
+		ld	c," "
+		RST 8
+		pop	af
+		pop	bc
+		djnz	loc_22E7
+		ld	de,5801h
+		ld	hl,5800h
+		ld	bc,5Fh
+		ld	(hl),0C2h
+		ldir
+		jr	loc_229E
+
+sub_230A:	exx
+		ld	d,1Fh
+		ld	bc,0EFFEh
+		exx
+loc_2311:	exx
+		in	a,(c)
+		bit	2,a
+		jr	nz,loc_231A
+		jp	(ix)
+
+loc_231A:	ld	b,0FEh
+		in	a,(c)
+		rra
+		jr	c,loc_232A
+		ld	b,0F7h
+		in	a,(c)
+		rra
+		jr	c,loc_232A
+		jp	(iy)
+
+loc_232A:	ld	b,0FEh
+		ld	a,d
+		out	(0FEh),a
+		add	a,10h
+		and	1Fh
+		ld	d,a
+		ld	a,e
+loc_2335:	dec	e
+		jr	nz,loc_2335
+		ld	e,a
+		exx
+		dec	hl
+		xor	a
+		cp	h
+		jr	nz,loc_2311
+		cp	l
+		jr	nz,loc_2311
+		exx
+loc_2343:	dec	hl
+		dec	iy
+		inc	iy
+		xor	a
+		cp	h
+		jr	nz,loc_2343
+		cp	l
+		jr	nz,loc_2343
+		ret
+
+SELECT_STARTDEV	RST30 0X120E
+		RST10 "┌─\5\5\5\5\5\5\5\5─┐"
+		RST30 0X120F
+		RST18 unk_3618
+		RST30 0X1210
+		RST10 "│       Запуск с FDD \2│"
+		RST30 0X1211
+		RST18 unk_3618
+		RST30 0X1212
+		RST10 "│       Запуск с HDD \2│"
+		RST30 0X1213
+		RST18 unk_3618
+		RST30 0X1214
+		RST10 "└\5\5\5\5\5\5\5\5──┘"
+		LD L,COL_DEV_MENU;0XCF
+		LD BC,0X0E12
+		LD DE,0X071C
+		CALL FILL_COLOR_WIN
+		LD B,0
+		PUSH BC
+		LD L,COL_DEVMEN_DRAW;0XF8
+		CALL COLORCURSOR
+WAIT_SEL	CALL WAIT_KEY
+		CP 0X1A					; курсор вниз
+		JR Z,CURS_DOWN
+		CP 0X19					; курсор вверх
+		JR Z,CURS_UP
+		CP 0X1B					; отказ
+		JR Z,NO_SELECT
+		CP 0X0D					; выбор
+		JR Z,YES_SELECT
+		JR WAIT_SEL
+
+YES_SELECT	POP BC
+		LD A,B
+		AND A
+		RET Z
+		JP START_VINT
+
+NO_SELECT	POP BC
+		SCF
+		RET
+
+CURS_UP		POP BC
+		XOR A
+		CP B
+		JR Z,CURSUP1
+		LD C,B
+		DEC C
+		JR CURSDOWN1
+
+CURSUP1		LD C,1
+		JR CURSDOWN1
+
+CURS_DOWN	POP BC
+		LD A,1
+		CP B
+		JR Z,CURSDOWN2
+		LD C,B
+		INC C
+CURSDOWN1	PUSH BC
+		LD L,COL_DEVMEN_DEL;0XCF
+		CALL COLORCURSOR
+		POP BC
+		LD B,C
+		PUSH BC
+		LD L,COL_DEVMEN_DRAW;0XF8
+		CALL COLORCURSOR
+		JP WAIT_SEL
+
+CURSDOWN2	LD C,0
+		JR CURSDOWN1
+
+COLORCURSOR	PUSH HL
+		LD E,B
+		LD D,0
+		LD HL,X_POS_CURS
+		ADD HL,DE
+		LD B,(HL)
+		LD C,0X14
+		LD DE,0X0118
+		POP HL
+		JP COLOR_CURSOR;FILL_COLOR_WIN
+
+X_POS_CURS	DB 0X10,0X12
+
+START_VINT	DI
+		RST 0x10
+		DB "\x0C\r\nHDD error, press RESET !!!",0
+		LD BC,PROFI_CONF
+		LD A,0x80
+		OUT (C),A
+		LD HL,START_BOOT
+		LD DE,0x8000
+		PUSH DE
+		LD BC,ESTART_BOOT-START_BOOT
+		LDIR
+		RET
+
+START_BOOT	PHASE 0x8000
+		include boot_hdd.a80
+		DEPHASE
+ESTART_BOOT
+
+		include ../../../../svn/pentevo/rom/dec40.a80
+FONT:		binclude cp866.fnt			; знакогенератор начиная с пробела
+ZASTAVKA:	binclude profi_logo_pack.bin
+
+word_175C	DW 0xC000+(TRDOS_48-BASIC_48)		;0C00EH TRDOS 48
+word_175E	DW 0xC000+(TRDOS_128-BASIC_48)		;0C01FH TRDOS 128
+		DW 0xC000				;0C000H BASIC 48
+		DW 0xC000+(BASIC_128-BASIC_48)		;0C00AH BASIC 128
+
+byte_32FC:	db 81h,48h,4Ch,50h,54h,5Ah,5Eh,62h,66h,6Ch,0B0h
+		db 0B5h,0BAh,4,7,0Ah,0Dh,10h,13h,16h,19h,1Ch
+		db 1Fh,22h,25h,0E8h,0B0h,0B5h,0BAh,81h,6,9,0Ch
+		db 0Fh,12h,15h,18h,1Bh,1Eh,21h,24h,27h,0B0h,0B5h
+		db 0BAh,1,8,0Bh,0Eh,11h,14h,17h,1Ah,1Dh,20h
+		db 23h,26h,0A9h,41h,9,0Ch,0Fh,12h,15h,18h,1Bh
+		db 1Eh,21h,24h,27h,0B5h,0C1h,89h,8Eh,0A7h,71h
+		db 0B5h,7Ah
+byte_334A:	db 95h,5,0Bh,5,2Ch,5,1Ch,5,1Bh,5,1Ah,5,23h
+		db 5,2Bh,5,25h,0FFh,2,0FFh,3Bh,5,43h,5,4Bh
+		db 5,63h,0FFh,34h,5,4Ah,5,52h,5,0Ah,5,22h,5
+		db 13h,5,2Ah,5,3Ah,5,24h,5,12h,5,35h,0FFh,64h
+		db 0FFh,2Dh,0FFh,0,0FFh,9,5,11h,5,19h,5,49h
+		db 5,95h,0FFh,1,84h,5Bh,84h,11h,84h,19h,84h
+		db 21h,84h,31h,84h,5Bh,0FFh,41h,84h,49h,84h,39h
+		db 84h,59h,84h,44h,0FFh,51h,0FFh,4Ch,0FFh,54h
+		db 0FFh,49h,0FFh,1,0FFh,9,0FFh,11h,0FFh,19h,0FFh
+		db 21h,0FFh,29h,0FFh,31h,0FFh,39h,0FFh,41h,0FFh
+		db 53h,84h,53h,0FFh,44h,84h,59h,0FFh,4Ch,84h
+		db 54h,84h,9,84h,0Bh,0FFh,2Ch,0FFh,1Ch,0FFh,1Bh
+		db 0FFh,1Ah,0FFh,23h,0FFh,2Bh,0FFh,33h,0FFh,42h
+		db 0FFh,3Bh,0FFh,43h,0FFh,4Bh,0FFh,3Ch,0FFh,34h
+		db 0FFh,4Ah,0FFh,52h,0FFh,0Ah,0FFh,22h,0FFh,13h
+		db 0FFh,2Ah,0FFh,3Ah,0FFh,24h,0FFh,12h,0FFh,14h
+		db 0FFh,32h,0FFh,0Ch,0FFh,5Ah,0FFh,5Ch,0FFh,62h
+		db 0FFh,29h,84h,51h,84h,14h,84h,23h,84h,13h,84h
+		db 2Bh,84h,0Bh,84h,42h,84h,1Ah,84h,58h,0FFh,60h
+		db 0FFh,0Dh,0FFh,33h,5,3Ch,5,14h,5,32h,5,0Ch
+		db 5,63h,5,83h,0FFh,1Dh,0FFh,61h,0FFh,84h,0FFh
+		db 5,0FFh,8,0FFh,10h,0FFh,18h,0FFh,20h,0FFh,28h
+		db 0FFh,30h,0FFh,38h,0FFh,40h,0FFh,48h,0FFh,50h
+		db 0FFh,71h,0FFh,72h,0FFh,79h,0FFh,7Ah,0FFh,69h
+		db 0FFh,6Ah,0FFh,8,84h,10h,84h,18h,84h,20h,84h
+		db 28h,84h,30h,84h,38h,84h,40h,84h,48h,84h,50h
+		db 84h,71h,84h,72h,84h,79h,84h,7Ah,84h,69h,84h
+		db 6Ah,84h,8,5,10h,5,18h,5,20h,5,28h,5,30h
+		db 5,38h,5,40h,5,48h,5,50h,5,71h,5,72h,5,79h
+		db 5,7Ah,5,69h,5,6Ah,5
+byte_3494:	db 41h,75h,64h,85h,1,95h,42h,76h,2Ah,86h,2,96h
+		db 43h,77h,3Fh,87h,3,97h,44h,78h,5Ch,88h,4,98h
+		db 45h,79h,66h,89h,5,99h,46h,7Ah,61h,8Ah,6,9Ah
+		db 47h,7Bh,63h,8Bh,7,9Bh,48h,7Ch,63h,8Ch,6Ah
+		db 9Ch,49h,7Dh,65h,8Dh,9,9Dh,4Ah,7Eh,2Dh,8Eh
+		db 0Ah,9Eh,4Bh,7Fh,2Bh,8Fh,0Bh,9Fh,4Ch,80h,3Dh
+		db 90h,0Ch,0A0h,4Dh,81h,2Eh,91h,6Bh,0A1h,4Eh
+		db 82h,2Ch,92h,0Eh,0A2h,4Fh,83h,3Bh,93h,0Fh,0A3h
+		db 50h,84h,22h,94h,10h,0A4h,0
+asc_34F5:	DZ "Тест  полной палитры"
+asc_350A:	DZ "Тест  XT - клавиатуры"
+asc_3520:	DZ "Тест  быстродействия"
+unk_3535:	DZ "╔\x18\x18\x18╗"
+unk_353B:	DZ "║\4\1║"
+unk_3540:	DZ "╚\x18\x18\x18╝"
+asc_3546:	DZ "6-й бит !!!"
+asc_3552:	DZ "Выход только через 'RESET' !!!"
+asc_3571:	DZ "0AAH & 55H\1"
+asc_357D:	DZ "тестируется"
+asc_3589:	DZ "  проверен "
+asc_3595:	DZ "wait"
+asc_359A:	DZ "Информация об авторе"
+asc_35AF:	DZ "Цветной сегмент !!!"
+asc_35C3:	DZ " Тест Атрибутов !!! "
+asc_35D8:	DZ "Символьный Тест !!!"
+asc_35EC:	DZ "Для продолжения нажмите"
+asc_3604:	DZ "клавишу \"Enter\" !!!"
+unk_3618:	DZ "│\4  │"
+asc_164F:	DZ "Переход в "
+asc_16DC:	DZ "Загрузка системы CP/M"
+asc_253B:	DZ "Тест  AY-3-8910/8912"
+asc_283D:	DB "0\2  1\1\2","2\1\2","3\1\2","4\1\2","5\1\2","6",0
+;COPYRIGHT1:	DZ " Фирма \"Кондор\" (Крамис) Москва ул.Саянская 7А Єє(095)300-15-51 "
+COPYRIGHT2:	DB " Copyright (c) by М.Б. Познянский (Micco Software) "
+		DB "Version ",ROM_VERS
+		DB 5 - strlen(ROM_VERS) DUP (' ')
+		db 0
+
+byte_361E:	db 2Ah,55h,2Ah,55h,2Ah,55h,2Ah,55h
+byte_3626:	db 0,55h,0AAh,55h,0AAh,55h,0AAh,55h
+byte_362E:	db 0,"═══════"
+
+; ADDR Y X V H
+TABL_COLOR_LOGO:DW COLOR01
+		DB 2,16h,1,7
+		DW COLOR02
+		DB 3,16h,1,6
+		DW COLOR03
+		DB 4,16h,1,6
+		DW COLOR04
+		DB 4,24h,1,6
+		DW COLOR05
+		DB 5,22h,1,8
+		DW COLOR06
+		DB 6,21h,1,9
+		DW COLOR07
+		DB 1,0,1,16h
+		DW COLOR08
+		DB 2,0,1,16h
+		DW COLOR09
+		DB 3,0,1,16h
+		DW COLOR10
+		DB 4,0,1,16h
+		DW COLOR11
+		DB 3,2Ah,1,16h
+		DW COLOR12
+		DB 4,2Ah,1,16h
+		DW COLOR13
+		DB 5,2Ah,1,16h
+		DW COLOR14
+		DB 6,2Ah,1,16h
+		DW 0
+
+COLOR01:	DB 0C7h,0C7h,0C7h,0C7h,0C7h,0C0h,0C1h,0C1h
+COLOR02:	DB 0C1h,0C1h,0C1h,0C1h,0C0h,0C2h,0C2h,0C2h
+COLOR03:	DB 0C2h,0C2h,0C2h,0C2h,0C7h,0C7h,0C7h,0C7h
+COLOR04:	DB 0C7h,0C7h,0C0h,0C1h,0C1h,0C1h,0C1h,0C1h
+COLOR05:	DB 0C1h,0C0h,0C2h,0C2h,0C2h,0C2h,0C2h,0C2h
+COLOR06:	DB 0C2h,0C7h,0C7h,0C7h,0C7h,0C7h,0C7h,0C7h
+COLOR07:	DB 0C0h,0C0h,0C0h,0C0h,0C0h,0C0h,0FFh,0FFh
+COLOR08:	DB 0FFh,0FFh,0FFh,0FFh,0FFh,0C0h,0C9h,0C9h
+COLOR09:	DB 0C9h,0C9h,0C9h,0C9h,0C0h,0D2h,0D2h,0D2h
+COLOR10:	DB 0D2h,0D2h,0D2h,0D2h,0x00,0x00,0x00,0x00
+COLOR11:	DB 0C0h,0C0h,0C0h,0FFh,0FFh,0FFh,0FFh,0FFh
+COLOR12:	DB 0FFh,0FFh,0C0h,0C9h,0C9h,0C9h,0C9h,0C9h
+COLOR13:	DB 0C9h,0C0h,0D2h,0D2h,0D2h,0D2h,0D2h,0D2h
+COLOR14:	DB 0D2h,0x00,0x00,0x00,0x00,0x00,0x00,0x00
+		DB 0C3h
+byte_3741:	DB 0x07,00Bh,0x00,00Ch,040h,0F1h,00Ch,0x01
+		DB 0x01,03Eh,0F8h,00Dh,0x01,0x08,03Eh,0F9h
+		DB 010h,0x02,0x01,014h,0FAh,011h,0x02,0x01
+		DB 03Ch,0
+byte_375B:	DB 0x07,0x00,0x00,01Eh,040h,0C6h,0x01,0x01
+		DB 0x06,018h,0C4h,0x01,01Ah,0x06,025h,0C1h
+		DB 00Ah,0x01,011h,018h,0C5h,0x08,0x01,0x02
+		DB 018h,0C2h,0x08,01Ah,0x03,00Bh,0C2h,00Ch
+		DB 01Ah,011h,00Bh,0x06,0x08,026h,0x03,019h
+		DB 0x06,00Ch,026h,011h,019h,0
+byte_3789:	DB 0Bh,1,3Eh,7,0Dh,1,3Eh,0,15h,1,3Eh,0,14h
+		DB 1,3Eh,7,0
+byte_379A:	DB 0Ch,0,9,0,0Ch,0,9,1,0Ch,3Fh,9,7,0Ch,3Fh
+		DB 9,6,0Dh,1,8,7,0Dh,3Eh,8,0,0Fh,1,4,0,0
+byte_37B7:	DB 0C5h,0Ah,5,1,19h,0F9h,0Bh,5,1,19h,0F8h,0Ch
+		DB 5,0Dh,19h,0C5h,0Bh,4,0Eh,1,0C5h,0Bh,1Eh
+		DUPL 2,1
+		DB 0C5h,19h,5
+		DUPL 2,1
+		DB 0
+byte_37D6:	DB 0C5h,0Ah,22h,1,19h,0F9h,0Bh,22h,1,19h,0F8h
+		DB 0Ch,22h,0Dh,19h,0C5h,0Bh,21h,0Eh,1,0C5h,0Bh
+		DB 3Bh
+		DUPL 2,1
+		DB 0C5h,19h,22h
+		DUPL 2,1
+		DB 0
+byte_37F5:	DB 1Ch,0,40h,7,1Ch,0,40h,6,0
+byte_37FE:	DB 9,1,3Eh,7,1Bh,1,3Eh
+		DUPL 2,0
+byte_3807:	DB 0Ah,0,11h,0,0Ah,3Fh,11h,7,0
+byte_3810:	DB 0Ah,5,19h,7,0Ch,5,19h,0,18h,5,19h,7,19h
+		DB 5,19h
+		DUPL 2,0
+byte_3821:	DB 0Bh,4,0Eh,0,0Bh,1Eh,0Eh,7,0
+byte_382A:	DB 0Bh,5,0Eh,7,0Bh,1Dh,0Eh
+		DUPL 2,0
+byte_3833:	DB 0Fh,5,19h,4,12h,5,19h,4,15h,5,19h,4,0Fh
+		DB 5,19h,3,12h,5,19h,3,15h,5,19h,3,0
+byte_384C:	DB 0Ah,22h,19h,7,0Ch,22h,19h,0,18h,22h,19h,7
+		DB 19h,22h,19h
+		DUPL 2,0
+byte_385D:	DB 0Bh,21h,0Eh,0,0Bh,3Bh,0Eh,7,0
+byte_3866:	DB 0Bh,22h,0Eh,7,0Bh,3Ah,0Eh,0,0
+
+byte_386F:	DB 0F9h			; --- color
+		DB 1Dh			; Y
+		DB 0			; X
+		DB 1			; V
+		DB 40h			; H
+		DB 0C1h			; ---
+		DB 1Ch
+		DB 0
+		DB 1
+		DB 40h
+		DB 0			; ---
+byte_387A:	DB 7
+		DB 0
+		DB 40h
+		DB 2
+		DB 7
+		DB 0
+		DB 40h
+		DB 5
+		DB 0
+byte_3883:	DB 1Dh
+		DB 0
+		DB 40h
+		DB 2
+		DB 1Dh
+		DB 0
+		DB 40h
+		DB 5
+		DB 0
+byte_388C:	DB 3,0,11h,0,3,0,11h,3,5,0,11h,7,5,0,11h
+		DB 4,0
+byte_389D:	DB 3,0,3,7,3,0,3,6,3,10h,3,0,3,10h,3,1
+		DB 0,0Ah,0,40h,2,0Ah,0,40h,5,0,19h,0,40h,2
+		DB 19h,0,40h,5,0
+byte_38C0:	DB 7,0Dh,13h,0Ah,1Ah,0F8h,0Fh,14h,7,18h,0F1h
+		DB 0Eh,14h,1,18h,0FAh,14h,15h,1,16h,0
+byte_38D5:	DB 7,0Bh,13h,0Fh,1Ah,0F8h,0Dh,14h,0Ch,18h,0F1h
+		DB 0Ch,14h,1,18h,0FAh,13h,15h,5,16h,0
+byte_38EA:	DB 7,0Dh,13h,0Bh,1Ah,0F8h,0Fh,14h,8,18h,0F1h
+		DB 0Eh,14h,1,18h,0
+byte_38FA:	DB 0Dh,14h,18h,7,16h,14h,18h,0,0Fh,14h,18h,0
+		DB 15h,14h,18h,7,0
+byte_390B:	DB 0Eh,13h,8,0,0Eh,13h,8,1,0Eh,2Ch,8,6,0Eh
+		DB 2Ch,8,7,0Fh,14h
+		DUPL 2,7
+		DB 0Fh,2Bh,7
+		DUPL 2,0
+byte_3924:	DB 0Bh,14h,18h,7,19h,14h,18h,0,0Dh,14h,18h,0
+		DB 18h,14h,18h,7,12h,14h,18h,3,12h,14h,18h,4
+		DB 0
+byte_393D:	DB 0Ch,13h,0Dh,0,0Ch,13h,0Dh,1,0Ch,2Ch,0Dh,6
+		DB 0Ch,2Ch,0Dh,7,0Dh,14h,0Ch,7,0Dh,2Bh,0Ch
+		DUPL 2,0
+byte_3956:	DB 0Dh,14h,18h,7,17h,14h,18h,0,0Fh,14h,18h,0
+		DB 16h,14h,18h,7,0
+byte_3967:	DB 0Eh,13h,9,0,0Eh,13h,9,1,0Eh,2Ch,9,6,0Eh
+		DB 2Ch,9,7,0Fh,14h,8,7,0Fh,2Bh,8
+		DUPL 2,0
+BYTES4PALITRA:	DB 0,2,10h,12h,80h,82h,90h,92h,0,3,18h,1Bh
+		DB 0C0h,0C3h,0D8h,0DBh
+byte_3990:	DUPL 3,47h
+		DUPL 2,46h
+		DUPL 3,45h
+		DB 0C3h
+                  
+TEST_PAL:	DB 4,8,0Ch,10h,14h,18h,1Ch,20h,40h,60h,80h,0A0h
+		DB 0C0h,0E0h,1,2,3,4,5,9,0Eh,12h,16h,17h,1Bh
+		DB 16h,12h,0Eh,0Ah,46h,62h,82h,83h,0A3h,0C3h
+		DB 0A3h,0A2h,82h,61h,48h,6Ch,70h,90h,0B0h,0B4h
+		DB 0B8h,0D8h,0D9h,0D5h,0D6h,0D2h,0CEh,0AEh,8Eh
+		DB 92h,96h,9Ah,9Bh,0BBh,0DBh,92h,49h,69h,6Eh
+		DB 8Eh,0AEh,0B2h,0B6h,0B5h,95h,75h,71h,51h,4Dh
+		DB 49h,0FFh
+byte_566:	DB 0,2,10h,12h,80h,82h,90h,92h,0,3,18h,1Bh
+		DB 0C0h,0C3h,0D8h,0DBh
+byte_576:	DB 12h,7,1Ch,14h,8,18h,16h,9,14h,18h,0Ah,10h
+		DB 1Ah,0Bh,0Ch,1Ch,0Ch,8,1Eh,0Dh,4
+                  
+TABL_KEYS:	DB "BHY65TGVNJU74RFCMKI83EDXsLO92WSZ \rP01QAt"
+asc_6CF:	DB "*^[&%>c/,-]\'$<a?.+e(#f\\`s=;)@hb:qi\"_!gdt"
+byte_6F7:	DB 2,6Ah,6Dh,1Ah,8,14h,7,16h,0Eh,0Ah,15h,19h
+		DB 1Eh,12h,6,3,6Bh,0Bh,9,18h,1Dh,5,4,6Ch,73h
+		DB 0Ch,0Fh,1Fh,1Ch,17h,13h,6Eh,0,6Fh,10h,72h
+		DB 1Bh,11h,1,74h
+                  
+byte_1275:	DB 0Dh
+		DUPL 2,10h
+		DUPL 2,0Dh
+                  
+byte_1293:	DB 38h,7,0,17h,40h,0F9h,1,12h,5,1Dh,2,9,1
+		DB 3,5,2,9,8,3,10h,2,9,1Ah,3,10h,2,9,2Ch ; цветовое поле XT клавиатуры
+		DB 3,13h,2,0Dh,4,3,2Ah,2,0Dh,30h,6,0Fh,2,10h
+		DB 1,9,29h,2,13h,2Ah,3,4,2,19h,1,3,6,2,19h
+		DB 9,3,23h,2,16h,35h,3,5,2,19h,31h,3,0Dh,0
+byte_12DA:	DB 3,4,5,6,7,8,19h,1
+byte_12E2:	DB 9,0Dh,10h,13h,16h,19h
+X_POSCUR_L:	DB 0Eh,10h,11h,13h,14h,16h	; X позиция курсора для левого окна
+off_19CF:	DW TEST_MEMORY
+		DW TEST_VIDEO
+		DW TEST_PALITRA
+		DW TEST_PCKEYS
+		DW TEST_AY
+		DW TEST_BEEP
+		DW TEST_SPEED
+		DW INFO_AVTOR
+		DW EXIT2MAIMENU
+                  
+byte_1FFA:	DB 0Dh,1Bh
+		DUPL 2,0
+		DB 0FFh,0Ah,32h
+                  
+byte_225E:	DUPL 4,0
+		DUPL 0Ch,0FFh
+		DB 55h
+byte_226F:	DUPL 2,0
+		DB 0FFh,0
+		DUPL 2,0FFh
+		DB 0
+		DUPL 9,0FFh
+		DB 55h
+byte_2705:	DB 70h
+		DUPL 6,0
+		DB 0B8h,10h
+		DUPL 2,0
+		DB 0FFh,3Fh,0Eh
+byte_2713:	DUPL 2,0
+		DB 0A8h
+		DUPL 4,0
+		DB 0B8h,0,10h,0,0FFh,3Fh,0Eh
+byte_2721:	DUPL 4,0
+		DB 0E0h
+		DUPL 2,0
+		DB 0B8h
+		DUPL 2,0
+		DB 10h,0FFh,3Fh,0Eh
+byte_272F:	DB 32h
+		DUPL 5,0
+		DB 1Eh,0BEh,0Ah,0,10h
+		DUPL 3,0
+byte_3DEF:	DB 0FAh,1Dh,0,1,40h
+		DB 0C2h,1Ch,0,1,40h
+		DB 0C7h,1Ah,19h,1,0Fh,0
+
+		DUPL 0X4000-$,0xFF

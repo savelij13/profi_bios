@@ -1,0 +1,12 @@
+
+;LAST UPDATE: 24.01.2021 savelij
+
+		include ../../../../svn/pentevo/rom/macros.a80
+		include ../../../../svn/pentevo/rom/bas_trd_vars.a80
+		include ../../../../svn/pentevo/rom/global_vars.a80
+
+VERS		EQU 1			;0-KAY 1-PROFI
+UP_PORT		EQU 0XDFFD
+;RAM_DRIVE	EQU 3			;Œ… €Œ„ˆ‘Š€ 0-A 1-B 2-C 3-D
+
+		include trdos.a80
