@@ -3,7 +3,7 @@
 
 ;LAST UPDATE: 23.01.2012 savelij
 
-		include ../../../../svn/pentevo/rom/macros.a80
+		include ../../../../yad/svn/pentevo/rom/macros.a80
 
 ; **************************************
 ; *** SPECTRUM 128 ROM 0 DISASSEMBLY ***

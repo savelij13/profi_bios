@@ -1,5 +1,5 @@
 
-;LAST UPDATE: 19.04.2021 savelij
+;LAST UPDATE: 27.05.2021 savelij
 
 ;автоопределение кодировки не работает
 
@@ -48,7 +48,7 @@
 ;3EC0 1EC0 X
 ;3FC0 1FC0 X
 
-		include ../../../../svn/pentevo/rom/macros.a80
+		include ../../../../yad/svn/pentevo/rom/macros.a80
 		include macros.a80
 
 ROM_VERS	EQU "2.3"
@@ -5181,7 +5181,7 @@ START_BOOT	PHASE 0x8000
 		DEPHASE
 ESTART_BOOT
 
-		include ../../../../svn/pentevo/rom/dec40.a80
+		include ../../../../yad/svn/pentevo/rom/dec40.a80
 FONT:		binclude cp866.fnt			; знакогенератор начиная с пробела
 ZASTAVKA:	binclude profi_logo_pack.bin
 
